@@ -44,7 +44,7 @@ body
 .months li
 {
 	display: inline-block;
-	padding: 1% 1%;
+	padding: 0.5% 0.5%;
 	margin: 1% 1%;
 	width: 20%;
 	color: #333;
@@ -54,12 +54,16 @@ body
 
 .month-name
 {
+	font-weight: bold;
+	font-size:120%;
 	text-align: center;
 }
 
 .month-season-name
 {
+	font-style: italic;
 	text-align: center;
+	padding: 1% 0%;
 }
 
 .days
@@ -86,7 +90,7 @@ body
 <hr>
 <div class="options">
 	<label for="wep-ronpet">Wep Ronpet Date (Gregorian):</label>
-	<input type="date" id="wep-ronpet" name="wep-ronpet" />
+	<input type="date" id="wep-ronpet" name="wep-ronpet">
 	<button type="button" onclick='applyChanges();'>Apply</button>
 </div>
 <hr>
@@ -94,7 +98,9 @@ body
 	<ul class="months">
 		<li class="month">
 			<div class="month-name">Thekhy</div>
+			<hr>
 			<div class="month-season-name">I Akhet</div>
+			<br>
 			<ul class="days">
 				<li class="day">1</li>
 			</ul>
