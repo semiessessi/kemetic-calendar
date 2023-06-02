@@ -29,6 +29,12 @@ body
 	font-family: Verdana, sans-serif;
 }
 
+.title
+{
+	font-weight: bold;
+	font-size: 140%;
+}
+
 .months
 {
 	background: #3adcbc;
@@ -76,7 +82,14 @@ body
 </head>
 
 <body>
-
+<span class="title">Kemetic Festival Calendar</span>
+<hr>
+<div class="options">
+	<label for="wep-ronpet">Wep Ronpet Date (Gregorian):</label>
+	<input type="date" id="wep-ronpet" name="wep-ronpet" />
+	<button type="button" onclick='applyChanges();'>Apply</button>
+</div>
+<hr>
 <div class="display">
 	<ul class="months">
 		<li class="month">
@@ -115,7 +128,7 @@ const seasonMonths =
 
 const monthNames =
 [
-	"Thekhy",
+	"Tekhy",
 	"Menhet",
 	"Huwt-Her",
 	"Ka Her Ka",
@@ -161,7 +174,7 @@ for(let i = 1; i < 12; ++i)
 	monthsContainer.appendChild(clonedMonth);
 }
 
-// TODO: add the epogomeneal days...
+// add the epogomeneal days...
 let lastDaysContainer = lastMonth.getElementsByClassName("days")[0];
 for(let i = 2; i <= 5; ++i)
 {
@@ -175,6 +188,11 @@ let monthSeasonName = lastMonth.getElementsByClassName("month-season-name")[0];
 monthSeasonName.innerHTML = seasonMonths[12];
 monthName.innerHTML = monthNames[12]
 monthsContainer.appendChild(lastMonth);
+
+function applyChanges()
+{
+	alert("TODO");
+}
 
 </script>
 
