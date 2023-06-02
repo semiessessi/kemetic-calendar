@@ -1,0 +1,182 @@
+<html>
+
+<head>
+<!--
+	the style is based on the simple example found on w3schools.com:
+
+		https://www.w3schools.com/howto/howto_css_calendar.asp
+
+	internal CSS is used for conveience of the user being able to download
+	a single file and open it and "just work"
+
+	if you want to override the style, copy paste this out to style .css and
+	add the following line here, and comment out the style element
+
+		<link rel="stylesheet" href="style.css">
+
+	-->
+<style>
+ul
+{
+	list-style-type: none;
+	padding-inline-start: 0px;
+	margin-block-start: 0em;
+	margin-block-end: 0em;
+}
+
+body
+{
+	font-family: Verdana, sans-serif;
+}
+
+.months
+{
+	background: #3adcbc;
+	padding: 2% 2%;
+}
+
+.months li
+{
+	display: inline-block;
+	padding: 1% 1%;
+	margin: 1% 1%;
+	width: 20%;
+	color: #333;
+	background: #1abc9c;
+	text-align: center;
+}
+
+.month-name
+{
+	text-align: center;
+}
+
+.month-season-name
+{
+	text-align: center;
+}
+
+.days
+{
+	background: #ffffff;
+}
+
+.days li
+{
+	padding: 1% 1%;
+	display: inline-block;
+	width:5%;
+	color: #666;
+	background: #ffffff;
+	text-align: center;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="display">
+	<ul class="months">
+		<li class="month">
+			<div class="month-name">Thekhy</div>
+			<div class="month-season-name">I Akhet</div>
+			<ul class="days">
+				<li class="day">1</li>
+			</ul>
+		</li>
+	</ul>
+</div>
+
+<script>
+// the idea is to dynamically generate the html based on the query string
+// when we press the button we refresh the page with a new query string.
+
+// this is not necessarily the best way to do this, but allows copy-pasting
+// the address-bar without introducing multiple points of failure
+
+const seasonMonths =
+[
+	"I Akhet",
+	"II Akhet",
+	"III Akhet",
+	"IV Akhet",
+	"I Peret",
+	"II Peret",
+	"III Peret",
+	"IV Peret",
+	"I Shemu",
+	"II Shemu",
+	"III Shemu",
+	"IV Shemu",
+	"Intercalary"
+];
+
+const monthNames =
+[
+	"Thekhy",
+	"Menhet",
+	"Huwt-Her",
+	"Ka Her Ka",
+	"Sef Bedet",
+	"Rekh-Wer",
+	"Rekh-Nedes",
+	"Renuwt",
+	"Khonsu",
+	"Henet Hetej",
+	"Ipet Hemet",
+	"Wep Ronpet",
+	"Heryu Ronpet"
+];
+
+let monthsContainer = document.getElementsByClassName("months")[0];
+
+// find the first month, and the container for the days
+let firstMonth = monthsContainer.getElementsByClassName("month")[0];
+let firstMonthDaysContainer = firstMonth.getElementsByClassName("days")[0];
+
+// find the first day
+let firstDay = firstMonthDaysContainer.getElementsByClassName("day")[0];
+
+// clone a copy for the intercalary days
+let lastMonth = firstMonth.cloneNode(true);
+
+// add the days
+for(let i = 2; i <= 30; ++i)
+{
+	let clonedDay = firstDay.cloneNode(true);
+	clonedDay.innerHTML = i.toString();
+	firstMonthDaysContainer.appendChild(clonedDay);
+}
+
+// now clone the months
+for(let i = 1; i < 12; ++i)
+{
+	let clonedMonth = firstMonth.cloneNode(true);
+	let monthName = clonedMonth.getElementsByClassName("month-name")[0];
+	let monthSeasonName = clonedMonth.getElementsByClassName("month-season-name")[0];
+	monthSeasonName.innerHTML = seasonMonths[i];
+	monthName.innerHTML = monthNames[i];
+	monthsContainer.appendChild(clonedMonth);
+}
+
+// TODO: add the epogomeneal days...
+let lastDaysContainer = lastMonth.getElementsByClassName("days")[0];
+for(let i = 2; i <= 5; ++i)
+{
+	let clonedDay = firstDay.cloneNode(true);
+	clonedDay.innerHTML = i.toString();
+	lastDaysContainer.appendChild(clonedDay);
+}
+
+let monthName = lastMonth.getElementsByClassName("month-name")[0];
+let monthSeasonName = lastMonth.getElementsByClassName("month-season-name")[0];
+monthSeasonName.innerHTML = seasonMonths[12];
+monthName.innerHTML = monthNames[12]
+monthsContainer.appendChild(lastMonth);
+
+</script>
+
+</body>
+</html>
