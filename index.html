@@ -22,17 +22,19 @@ ul
 	padding-inline-start: 0px;
 	margin-block-start: 0em;
 	margin-block-end: 0em;
+	justify-content: center;
 }
 
 body
 {
 	font-family: Verdana, sans-serif;
+	font-size: 1.25vw;
 }
 
 .title
 {
 	font-weight: bold;
-	font-size: 140%;
+	font-size: 135%;
 }
 
 .months
@@ -73,7 +75,7 @@ body
 .month-name
 {
 	font-weight: bold;
-	font-size:120%;
+	font-size: 120%;
 	text-align: center;
 }
 
@@ -97,6 +99,7 @@ body
 	color: #666;
 	background: #ffffff;
 	text-align: center;
+	font-size: 85%;
 }
 
 </style>
@@ -120,10 +123,10 @@ body
 			<div class="month-season-name">I Akhet</div>
 			<br>
 			<ul class="days">
-				<li class="day">1</li>
-			</ul>
-		</li>
-	</ul>
+				<li class="day">1</li> </ul></li></ul> <!-- single line
+						to work around a bug in browser rendering or HTML
+						or something else that made a whitespace break things
+						-->
 	<ul class="intercalary">
 	</ul>
 </div>
