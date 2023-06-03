@@ -218,7 +218,7 @@ body
 <div class="options">
 	<label for="wep-ronpet">Wep Ronpet Date (Gregorian):</label>
 	<input type="date" id="wep-ronpet" name="wep-ronpet">
-	<button type="button" onclick='applyChanges();'>Apply</button>
+	<button type="button" onclick='applyChanges();'>Change Date</button>
 </div>
 <hr>
 <div>
@@ -356,6 +356,7 @@ const festivalData = new Map(
 	[360 + 5, "Birthday of Nephthys"],
 ]);
 
+let sidebar = document.getElementsByClassName("sidebar")[0];
 let monthsContainer = document.getElementsByClassName("months")[0];
 
 // find the first month, and the container for the days
@@ -421,19 +422,20 @@ for (let day of allDays)
 
 function applyChanges()
 {
-	alert("TODO");
+	window.location = window.location.pathname
+		+ "?wep-ronpet=" + datePicker.value;
 }
 
 function clickDay(dayNumber)
 {
+	let gregorianDate = new Date(wepRonpetDate);
+	gregorianDate.setDate(gregorianDate.getDate() + (dayNumber - 1));
+	let descriptionHTML = "<div>" + gregorianDate.toISOString().substring(0, 10) + " / day " + dayNumber.toString() + "</div>";
 	if(festivalData.has(dayNumber))
 	{
-		alert("Day " + dayNumber.toString() + " - " + festivalData.get(dayNumber));
+		descriptionHTML += "<hr><div>" + festivalData.get(dayNumber) + "</div>";
 	}
-	else
-	{
-		alert("Day " + dayNumber.toString());
-	}
+	sidebar.innerHTML = descriptionHTML;
 }
 
 </script>
