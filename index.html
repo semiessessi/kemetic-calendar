@@ -132,6 +132,12 @@ body
 	background: #6aeccc !important;
 }
 
+.today-date
+{
+	background: #ec6c6c !important;
+	color: #000 !important;
+}
+
 @media (max-aspect-ratio: 4/3)
 {
 	body
@@ -249,12 +255,28 @@ body
 
 const queryString = window.location.search;
 const urlParams = new URLSearchParams(queryString);
+
+// key date
+let todayDate = new Date();
 let wepRonpetDate = new Date();
 wepRonpetDate.setMonth(7);
 wepRonpetDate.setDate(6);
+if(wepRonpetDate > todayDate)
+{
+	wepRonpetDate.setFullYear(wepRonpetDate.getFullYear()-1);
+}
 if(urlParams.has('wep-ronpet'))
 {
 	wepRonpetDate = new Date(urlParams.get('wep-ronpet'));
+}
+
+let today = Math.floor((todayDate - wepRonpetDate) / 86400000) + 1;
+
+// selected day
+let selectedDay = (today >= 1) ? today : 1;
+if(urlParams.has('selected-day'))
+{
+	selectedDay = parseInt(urlParams.get('selected-day'));
 }
 
 // set the date in the picker
@@ -412,7 +434,11 @@ let dayCounter = 1;
 for (let day of allDays)
 {
 	const currentDay = dayCounter;
-	if(festivalData.has(currentDay))
+	if(currentDay == today)
+	{
+		day.classList.add("today-date");
+	}
+	else if(festivalData.has(currentDay))
 	{
 		day.classList.add("festival-date");
 	}
@@ -428,6 +454,7 @@ function applyChanges()
 
 function clickDay(dayNumber)
 {
+	selectedDay = dayNumber;
 	let gregorianDate = new Date(wepRonpetDate);
 	gregorianDate.setDate(gregorianDate.getDate() + (dayNumber - 1));
 	let descriptionHTML = "<div>" + gregorianDate.toISOString().substring(0, 10) + " / day " + dayNumber.toString() + "</div>";
@@ -438,6 +465,7 @@ function clickDay(dayNumber)
 	sidebar.innerHTML = descriptionHTML;
 }
 
+clickDay(selectedDay);
 </script>
 
 </body>
