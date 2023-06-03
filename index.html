@@ -198,7 +198,8 @@ for(let i = 1; i < 12; ++i)
 {
 	let clonedMonth = firstMonth.cloneNode(true);
 	let monthName = clonedMonth.getElementsByClassName("month-name")[0];
-	let monthSeasonName = clonedMonth.getElementsByClassName("month-season-name")[0];
+	let monthSeasonName =
+		clonedMonth.getElementsByClassName("month-season-name")[0];
 	monthSeasonName.innerHTML = seasonMonths[i];
 	monthName.innerHTML = monthNames[i];
 	monthsContainer.appendChild(clonedMonth);
@@ -220,9 +221,25 @@ monthSeasonName.innerHTML = seasonMonths[12];
 monthName.innerHTML = monthNames[12];
 intercalaryContainer.appendChild(lastMonth);
 
+// add onclick callbacks to each day, this relies on them being in order in
+// the document
+let allDays = document.getElementsByClassName("day");
+let dayCounter = 1;
+for (let day of allDays)
+{
+	const currentDay = dayCounter;
+	day.onclick = function(){clickDay(currentDay);}
+	++dayCounter;
+}
+
 function applyChanges()
 {
 	alert("TODO");
+}
+
+function clickDay(dayNumber)
+{
+	alert("Day " + dayNumber.toString());
 }
 
 </script>
