@@ -127,6 +127,10 @@ body
 	font-size: 67%;
 }
 
+.festival-date
+{
+	background: #6aeccc !important;
+}
 
 @media (max-aspect-ratio: 4/3)
 {
@@ -291,6 +295,23 @@ const monthNames =
 	"Heryu Ronpet"
 ];
 
+const festivalData = new Map(
+[
+	[1, "New Year - Opening of the Year - birthday of Ra-Horakhty (the sun-god)"],
+	[15, "offerings to Hapy and Amun to secure a good flood (known from Dynasty 19 rock inscriptions at Gebel el-Silsila)"],
+	[17, "eve of the Wag festival"],
+	[18, "Wag festival"],
+	[19, "Wag and Thoth festival, according to the great festival list in the temple for Ramesses III at Medinet Habu"],
+	[20, "Tekh (drunkenness)"],
+	[22, "Great Procession (of Osiris)"],
+	
+	[30 + 15, "start of Ipet festival as 11-day festivities for Amun in Luxor, according to the festival list of Thutmose III at Elephantine"],
+	[30 + 18, "start of Ipet festival as 11-day festivities for Amun in Luxor, according to the festival list of Thutmose III at Elephantine"],
+	[30 + 19, " start of Ipet festival as 27-day festivities for Amun in Luxor, according to the record of good deeds of Ramesses III (Papyrus Harris I), and great festival list in the temple for Ramesses III at Medinet Habu"],
+	[30 + 27, "start of 2-day local festival of Mont, according to the late Middle Kingdom (about 2025-1700 BC) accounts papyrus Boulaq 18 (referring to it as 'festival of Mont'; this may be not an annual festival, but one ceremony, perhaps at the consecration of a shrine)"],
+	[30 + 28, "local Elephantine festival of Satet and Anuqet, according to the festival list of Thutmose III at Elephantine"],
+]);
+
 let monthsContainer = document.getElementsByClassName("months")[0];
 
 // find the first month, and the container for the days
@@ -346,6 +367,10 @@ let dayCounter = 1;
 for (let day of allDays)
 {
 	const currentDay = dayCounter;
+	if(festivalData.has(currentDay))
+	{
+		day.classList.add("festival-date");
+	}
 	day.onclick = function(){clickDay(currentDay);}
 	++dayCounter;
 }
@@ -357,7 +382,14 @@ function applyChanges()
 
 function clickDay(dayNumber)
 {
-	alert("Day " + dayNumber.toString());
+	if(festivalData.has(dayNumber))
+	{
+		alert("Day " + dayNumber.toString() + " - " + festivalData.get(dayNumber));
+	}
+	else
+	{
+		alert("Day " + dayNumber.toString());
+	}
 }
 
 </script>
