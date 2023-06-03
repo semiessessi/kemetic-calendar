@@ -37,6 +37,22 @@ body
 	font-size: 135%;
 }
 
+.calendar-display
+{
+	width: 70%;
+}
+
+.sidebar
+{
+	width: 30%;
+	height: 100%;
+	position: fixed;
+	top: 0;
+	right: 0;
+	padding-top: 40px;
+	background-color: #ffffff;
+}
+
 .months
 {
 	background: #3adcbc;
@@ -76,7 +92,7 @@ body
 .month-name
 {
 	font-weight: bold;
-	font-size: 120%;
+	font-size: 95%;
 	text-align: center;
 }
 
@@ -84,7 +100,15 @@ body
 {
 	font-style: italic;
 	text-align: center;
-	padding: 1% 0%;
+	font-size: 85%;
+	padding: 0.3% 0%;
+	margin-bottom:1.5%;
+}
+
+.month hr
+{
+	margin-bottom:1%;
+	margin-top:0.5%;
 }
 
 .days
@@ -100,7 +124,70 @@ body
 	color: #666;
 	background: #ffffff;
 	text-align: center;
-	font-size: 85%;
+	font-size: 67%;
+}
+
+
+@media (max-aspect-ratio: 4/3)
+{
+	.months li
+	{
+		width:29.5%;
+	}
+	
+	.month-name
+	{
+		font-size: 125%;
+	}
+
+	.month-season-name
+	{
+		font-size: 111%;
+	}
+	
+	.days li
+	{
+		font-size: 100%;
+		width:6.2%;
+	}
+}
+
+@media (max-aspect-ratio: 1/1)
+{
+	.months li
+	{
+		width:46.5%;
+	}
+	
+	.month-name
+	{
+		font-size: 150%;
+	}
+
+	.month-season-name
+	{
+		font-size: 133%;
+	}
+	
+	.days li
+	{
+		font-size: 120%;
+		width:6.2%;
+	}
+	
+	.sidebar
+	{
+		width: 100%;
+		height: 10%;
+		padding-top: 40px;
+		position: relative;
+		background-color: #ffffff;
+	}
+	
+	.calendar-display
+	{
+		width: 100%;
+	}
 }
 
 </style>
@@ -116,28 +203,45 @@ body
 	<button type="button" onclick='applyChanges();'>Apply</button>
 </div>
 <hr>
-<div class="display">
-	<ul class="months">
-		<li class="month">
-			<div class="month-name">Tekhy</div>
-			<hr>
-			<div class="month-season-name">I Akhet</div>
-			<br>
-			<ul class="days">
-				<li class="day">1</li></ul></li></ul> <!-- single line
-						to work around a bug in browser rendering or HTML
-						or something else that made a whitespace break things
-						-->
-	<ul class="intercalary">
-	</ul>
+<div>
+	<div class="calendar-display">
+		<ul class="months">
+			<li class="month">
+				<div class="month-name">Tekhy</div>
+				<hr>
+				<div class="month-season-name">I Akhet</div>
+				<ul class="days">
+					<li class="day">1</li></ul></li></ul> <!-- single line
+							to work around a bug in browser rendering or HTML
+							or something else that made a whitespace break things
+							-->
+		<ul class="intercalary">
+		</ul>
+	</div>
+	<div class="sidebar">
+	TODO: Sidebar information when selecting a date
+	</div>
 </div>
-
 <script>
 // the idea is to dynamically generate the html based on the query string
 // when we press the button we refresh the page with a new query string.
 
 // this is not necessarily the best way to do this, but allows copy-pasting
 // the address-bar without introducing multiple points of failure
+
+const queryString = window.location.search;
+const urlParams = new URLSearchParams(queryString);
+let wepRonpetDate = new Date();
+wepRonpetDate.setMonth(7);
+wepRonpetDate.setDate(6);
+if(urlParams.has('wep-ronpet'))
+{
+	wepRonpetDate = new Date(urlParams.get('wep-ronpet'));
+}
+
+// set the date in the picker
+let datePicker = document.getElementById('wep-ronpet');
+datePicker.value = wepRonpetDate.toISOString().substring(0, 10);
 
 const seasonMonths =
 [
