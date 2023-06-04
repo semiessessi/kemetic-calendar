@@ -53,6 +53,11 @@ body
 	background-color: #ffffff;
 }
 
+.sidebar-today-title
+{
+	color: #a00;
+}
+
 .months
 {
 	background: #3adcbc;
@@ -464,7 +469,7 @@ function clickDay(dayNumber)
 	let descriptionHTML = '<div class = "sidebar-title">' + dayInMonth.toString() + " " + seasonMonths[month] + "</div>";
 	if(selectedDay == today)
 	{
-		descriptionHTML = '<div class="today-title">Today</div>' + descriptionHTML;
+		descriptionHTML = '<div class="sidebar-today-title">Today</div>' + descriptionHTML;
 	}
 	
 	descriptionHTML += '<div class="sidebar-date-simple">' + gregorianDate.toISOString().substring(0, 10) + " / day " + dayNumber.toString() + "</div>";
