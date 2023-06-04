@@ -457,7 +457,15 @@ function clickDay(dayNumber)
 	selectedDay = dayNumber;
 	let gregorianDate = new Date(wepRonpetDate);
 	gregorianDate.setDate(gregorianDate.getDate() + (dayNumber - 1));
-	let descriptionHTML = "<div>" + gregorianDate.toISOString().substring(0, 10) + " / day " + dayNumber.toString() + "</div>";
+	let month =  Math.floor((selectedDay - 1) / 30);
+	let dayInMonth = ((selectedDay - 1) % 30) + 1;
+	let descriptionHTML = '<div class = "sidebar-title">' + dayInMonth.toString() + " " + seasonMonths[month] + "</div>";
+	if(selectedDay == today)
+	{
+		descriptionHTML = '<div class="today-title">Today</div>' + descriptionHTML;
+	}
+	
+	descriptionHTML += '<div class="sidebar-date-simple">' + gregorianDate.toISOString().substring(0, 10) + " / day " + dayNumber.toString() + "</div>";
 	if(festivalData.has(dayNumber))
 	{
 		descriptionHTML += "<hr><div>" + festivalData.get(dayNumber) + "</div>";
