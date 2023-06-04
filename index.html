@@ -333,51 +333,51 @@ const festivalData = new Map(
 	[19, "Wag and Thoth festival, according to the great festival list in the temple for Ramesses III at Medinet Habu"],
 	[20, "Tekh (drunkenness)"],
 	[22, "Great Procession (of Osiris)"],
-	
+
 	[30 + 15, "Start of Ipet festival as 11-day festivities for Amun in Luxor, according to the festival list of Thutmose III at Elephantine"],
 	[30 + 18, "Start of Ipet festival as 11-day festivities for Amun in Luxor, according to the festival list of Thutmose III at Elephantine"],
 	[30 + 19, "Start of Ipet festival as 27-day festivities for Amun in Luxor, according to the record of good deeds of Ramesses III (Papyrus Harris I), and great festival list in the temple for Ramesses III at Medinet Habu"],
 	[30 + 27, "Start of 2-day local festival of Mont, according to the late Middle Kingdom (about 2025-1700 BC) accounts papyrus Boulaq 18 (referring to it as 'festival of Mont'; this may be not an annual festival, but one ceremony, perhaps at the consecration of a shrine)"],
 	[30 + 28, "Local Elephantine festival of Satet and Anuqet, according to the festival list of Thutmose III at Elephantine"],
-	
+
 	[60 + 9, "Festival for Amun, according to the festival list of Thutmose III at Elephantine"],
 	[60 + 30, "local Elephantine festival of Anuqet, according to the festival list of Thutmose III at Elephantine"],
-	
+
 	[90 + 1, "Festival for Hathor, according to the great festival list in the temple for Ramesses III at Medinet Habu"],
 	[90 + 18, "start of the Khoiak ceremonies, start of the Khoiak ceremonies:"],
 	[90 + 22, "Khoiak ceremony: Ploughing the Earth"],
 	[90 + 26, "Khoiak ceremony: Sokar festival"],
 	[90 + 30, "Khoiak ceremony: raising the Djed-pillar"],
-	
+
 	[120 + 1, "Festival for Hathor, according to the great festival list in the temple for Ramesses III at Medinet Habu"],
 	[120 + 20, "Sailing of Wadjyt, according to an inscription for king Thutmose III at the temple of Mut, Karnak"],
 	[120 + 29, "Sailing of Bast, according to an inscription for king Thutmose III at the temple of Mut, Karnak. Festival of Raising the Willow, according to the great festival list in the temple for Ramesses III at Medinet Habu"],
 	[120 + 30, "sailing of Shesmet, according to an inscription for king Thutmose III at the temple of Mut, Karnak, according to a late New Kingdom Turin papyrus, the festival is the sailing of Mut lady of Isheru"],
-	
+
 	[150 + 1, "Sailing of Anubis"],
 	[150 + 30, "A key date in a festival spanning several days, identified sometimes as 'Amun-in-the-festival-of-raising-heaven', and in some sources the day of bringing branches of the ished-tree (sacred tree of the sun-god at Iunu) and culminating on the next day, the first of the next month, with the ceremony of filling the sacred eye in Iunu; this is the halfway point of the year, ideal 'midwinter'"],
-	
+
 	[180 + 1, "Festival of Ptah (perhaps local to Thebes?), according to the journal for work on the king's tomb; day of return of the image of the deity in the festival 'Amun-in-the-festival-of-raising-heaven'"],
 	[180 + 21, "Festival of king Amenhotep I in the valley (originally local to Thebes? month name indicates broader observation later?)"],
 	[180 + 29, "start (?) of 4-day festival of king Amenhotep I for the Deir el-Medina workforce"],
-	
+
 	[210 + 4, "Festival of Bast, also recorded as the day of chewing onions for Bast"],
 	[210 + 5, "Appearance of Bast in her boat, according to a Dynasty 26 statue (Louvre A88)"],
 	[210 + 25, "Harvest offering to Renenutet, according to a depiction in Theban Tomb-chapel 38"],
 	[210 + 27, "Granary offering to Renenutet, according to a depiction in Theban tomb-chapel 48"],
-	
+
 	[240 + 1, "Festival of Renenutet, also identified as the birthday of Nepri (personification of grain)"],
 	[240 + 10, "Adoration of Anubis"],
 	[240 + 11, "Festival of Min, a 4-day festival at the New Moon according to the great festival list in the temple for Ramesses III at Medinet Habu"],
-	
+
 	[300 + 15, "Offerings to Hapy and Amun to secure a good flood (known from Dynasty 19 rock inscriptions at Gebel el-Silsila)"],
 	[300 + 30, "Eve of the Hathor festival at Thebes, according to stela for king Thutmose III, Cairo CG 34013"],
-	
+
 	[330 + 1, "Start of 2 day long festival, occasion not specified, according to late New Kingdom ostracon Deir el-Medina 209, verso, line 4"],
 	[330 + 2, "Ipip festival, according to the journal for work on the king's tomb, Necropolis Journal pl.59, line 19"],
 	[330 + 24, "Festival of Ptah (local?), according to a rough inscription on a Middle Kingdom pyramid"],
 	[330 + 25, "Eve of start of year"],
-	
+
 	[360 + 1, "Birthday of Osiris"],
 	[360 + 2, "Birthday of Horus"],
 	[360 + 3, "Birthday of Seth"],
@@ -471,7 +471,7 @@ function clickDay(dayNumber)
 	{
 		descriptionHTML = '<div class="sidebar-today-title">Today</div>' + descriptionHTML;
 	}
-	
+
 	descriptionHTML += '<div class="sidebar-date-simple">' + gregorianDate.toISOString().substring(0, 10) + " / day " + dayNumber.toString() + "</div>";
 	if(festivalData.has(dayNumber))
 	{
