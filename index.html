@@ -580,7 +580,7 @@ let allDays = document.getElementsByClassName("day");
 let dayCounter = 1;
 for (let day of allDays)
 {
-	const currentDay = dayCounter;
+	const currentDay = dayCounter; // this is important...
 	if(currentDay == today)
 	{
 		day.classList.add("today-date");
@@ -600,6 +600,9 @@ for (let day of allDays)
 		day.classList.add("selected-date");
 	}
 
+	// having the const variable makes this work as expected.
+	// there is a copy for each one, if we use dayCounter
+	// naively we just end up referencing the value.
 	day.onclick = function(){clickDay(currentDay);}
 	++dayCounter;
 }
