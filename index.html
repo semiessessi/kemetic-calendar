@@ -166,6 +166,13 @@ body
 	color: #777 !important;
 }
 
+.selected-date
+{
+	border-style: solid;
+	border-width: 1.5px;
+	border-color: #7ac;
+}
+
 @media (max-aspect-ratio: 4/3)
 {
 	body
@@ -524,6 +531,11 @@ for (let day of allDays)
 		day.classList.add("end-of-decan");
 	}
 
+	if(currentDay == selectedDay)
+	{
+		day.classList.add("selected-date");
+	}
+
 	day.onclick = function(){clickDay(currentDay);}
 	++dayCounter;
 }
@@ -531,12 +543,21 @@ for (let day of allDays)
 function applyChanges()
 {
 	window.location = window.location.pathname
-		+ "?wep-ronpet=" + datePicker.value;
+		+ "?wep-ronpet=" + datePicker.value
+		+ "&selected-day=" + selectedDay;
 }
 
+var firstCall = true;
 function clickDay(dayNumber)
 {
 	selectedDay = dayNumber;
+	if(firstCall == false)
+	{
+		applyChanges();
+		return;
+	}
+	
+	firstCall = false;
 	let gregorianDate = new Date(wepRonpetDate);
 	gregorianDate.setDate(gregorianDate.getDate() + (dayNumber - 1));
 	let month =  Math.floor((selectedDay - 1) / 30);
