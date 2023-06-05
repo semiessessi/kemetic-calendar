@@ -309,6 +309,12 @@ body
 	<label for="wep-ronpet">Wep Ronpet Date (Gregorian):</label>
 	<input type="date" id="wep-ronpet" name="wep-ronpet">
 	<button type="button" onclick='applyChanges();'>Change Date</button>
+	<label for="month-names"Month Names:</label>
+	<select name="month-names" id="month-names" onchange="updateMonthStyle()">
+		<option value="0">Middle Kingdom</option>
+		<option value="1">New Kingdom</option>
+		<option value="2">Greek</option>
+	</select>
 </div>
 <hr>
 <div>
@@ -384,7 +390,7 @@ const seasonMonths =
 	"Intercalary"
 ];
 
-const monthNames =
+const monthNamesDefault =
 [
 	"Tekhy",
 	"Menhet",
@@ -393,13 +399,66 @@ const monthNames =
 	"Sef Bedet",
 	"Rekh-Wer",
 	"Rekh-Nedes",
-	"Renuwt",
+	"Renenutet",
 	"Khonsu",
 	"Henet Hetej",
 	"Ipet Hemet",
 	"Wep Ronpet",
 	"Heryu Ronpet"
 ];
+
+const monthNamesNew =
+[
+	"Djehuty",
+	"Pan Ipet",
+	"Huwt-Her",
+	"Ka Her Ka",
+	"Ta Ab",
+	"Mekhyr",
+	"Pan Imenhetepu",
+	"Pan Renenutet",
+	"Pan Khonsu",
+	"Pan Inet",
+	"Ipip",
+	"Mesuwt Ra",
+	"Heryu Ronpet"
+];
+
+
+const monthNamesGreek =
+[
+	"Thoth",
+	"Phaophi",
+	"Athur",
+	"Khoiak",
+	"Tubí",
+	"Mekhír",
+	"Phamenoth",
+	"Pharmouthi",
+	"Pakhon",
+	"Paoni",
+	"Epiphi",
+	"Mesore",
+	"Epagomenai"
+];
+
+// month style
+let monthStyle = 0;
+let monthNames = monthNamesDefault;
+if(urlParams.has('month-style'))
+{
+	monthStyle = urlParams.get('month-style');
+	if(monthStyle == 1)
+	{
+		monthNames = monthNamesNew;
+	}
+	else if(monthStyle >= 2)
+	{
+		monthNames = monthNamesGreek;
+	}
+}
+// set the dropdown for style of months
+document.getElementById('month-names').value = monthStyle;
 
 const festivalDataUCL = new Map(
 [
@@ -468,6 +527,10 @@ let monthsContainer = document.getElementsByClassName("months")[0];
 // find the first month, and the container for the days
 let firstMonth = monthsContainer.getElementsByClassName("month")[0];
 let firstMonthDaysContainer = firstMonth.getElementsByClassName("days")[0];
+
+// fix the first month's details
+let firstMonthName = firstMonth.getElementsByClassName("month-name")[0];
+firstMonthName.innerHTML = monthNames[0];
 
 // find the first day
 let firstDay = firstMonthDaysContainer.getElementsByClassName("day")[0];
@@ -541,11 +604,18 @@ for (let day of allDays)
 	++dayCounter;
 }
 
+function updateMonthStyle()
+{
+	monthStyle = document.getElementById('month-names').value;
+	applyChanges();
+}
+
 function applyChanges()
 {
 	window.location = window.location.pathname
 		+ "?wep-ronpet=" + datePicker.value
-		+ "&selected-day=" + selectedDay;
+		+ "&selected-day=" + selectedDay
+		+ "&month-style=" + monthStyle;
 }
 
 var firstCall = true;
