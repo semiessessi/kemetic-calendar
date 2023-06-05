@@ -58,6 +58,11 @@ body
 	color: #a00;
 }
 
+.sidebar-end-of-decan
+{
+	color: #00a;
+}
+
 .sidebar-title
 {
 	font-size: 115%;
@@ -155,6 +160,12 @@ body
 	color: #000 !important;
 }
 
+.end-of-decan
+{
+	background: #f0bcbc !important;
+	color: #777 !important;
+}
+
 @media (max-aspect-ratio: 4/3)
 {
 	body
@@ -190,7 +201,7 @@ body
 {
 	body
 	{
-		font-size: 2.25vw;
+		font-size: 3vw;
 	}
 
 	.title
@@ -230,6 +241,52 @@ body
 		width: 100%;
 	}
 }
+
+@media (max-aspect-ratio: 5/6)
+{
+	body
+	{
+		font-size: 5vw;
+	}
+
+	.title
+	{
+		font-size: 111%;
+	}
+
+	.months li
+	{
+		width:96.5%;
+	}
+
+	.month-name
+	{
+	}
+
+	.month-season-name
+	{
+	}
+
+	.days li
+	{
+		width:6.2%;
+	}
+
+	.sidebar
+	{
+		width: 100%;
+		height: 10%;
+		padding-top: 40px;
+		position: relative;
+		background-color: #ffffff;
+	}
+
+	.calendar-display
+	{
+		width: 100%;
+	}
+}
+
 
 </style>
 
@@ -336,7 +393,7 @@ const monthNames =
 	"Heryu Ronpet"
 ];
 
-const festivalData = new Map(
+const festivalDataUCL = new Map(
 [
 	[1, "New Year - Opening of the Year - birthday of Ra-Horakhty (the sun-god)"],
 	[15, "offerings to Hapy and Amun to secure a good flood (known from Dynasty 19 rock inscriptions at Gebel el-Silsila)"],
@@ -457,10 +514,16 @@ for (let day of allDays)
 	{
 		day.classList.add("today-date");
 	}
-	else if(festivalData.has(currentDay))
+	else if(festivalDataUCL.has(currentDay))
 	{
 		day.classList.add("festival-date");
 	}
+
+	if((currentDay % 10) == 0)
+	{
+		day.classList.add("end-of-decan");
+	}
+
 	day.onclick = function(){clickDay(currentDay);}
 	++dayCounter;
 }
@@ -479,15 +542,21 @@ function clickDay(dayNumber)
 	let month =  Math.floor((selectedDay - 1) / 30);
 	let dayInMonth = ((selectedDay - 1) % 30) + 1;
 	let descriptionHTML = '<div class = "sidebar-title">' + dayInMonth.toString() + " " + seasonMonths[month] + "</div>";
+
+	if((selectedDay % 10) == 0)
+	{
+		descriptionHTML = '<div class="sidebar-end-of-decan">End of Decan</div>' + descriptionHTML;
+	}
+
 	if(selectedDay == today)
 	{
 		descriptionHTML = '<div class="sidebar-today-title">Today</div>' + descriptionHTML;
 	}
-
+	
 	descriptionHTML += '<div class="sidebar-date-simple">' + gregorianDate.toISOString().substring(0, 10) + " / day " + dayNumber.toString() + "</div>";
-	if(festivalData.has(dayNumber))
+	if(festivalDataUCL.has(dayNumber))
 	{
-		descriptionHTML += "<hr><div>" + festivalData.get(dayNumber) + "</div>";
+		descriptionHTML += "<hr><div>" + festivalDataUCL.get(dayNumber) + "</div>";
 	}
 	sidebar.innerHTML = descriptionHTML;
 }
