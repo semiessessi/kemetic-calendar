@@ -369,10 +369,10 @@ function gregorianToJulianDay(year, month, day)
 	// together with the initial month and year adjustments this lets us work
 	// out the days to add from the month number allowing us to handle the
 	// special case of February by ignoring it.
-	
+
 	// evaluating f for the input values of month and looking at differences
-	// shows a pattern alternating between 30 and 31, with 31 repeated. 
-	
+	// shows a pattern alternating between 30 and 31, with 31 repeated.
+
 	/*
 		Month: 3, Result: 122, Difference: ???	// (no previous month)
 		Month: 4, Result: 153, Difference: 31	// march
@@ -389,6 +389,88 @@ function gregorianToJulianDay(year, month, day)
 	*/
 
 	return leapDaysAdjustment + day + daysFromYears + daysFromMonths - 1524.5;
+}
+
+// this produces altitude an azimuth as if the Earth's orientation was as it
+// was on J2000.0 - i.e. no precession or nutaton considered
+function calculateAltitudeAzimuth(
+	julianDay, rightAscensionJ2000, declinationJ2000, latitude, longitude)
+{
+	// convert latitude and longitude to radians
+	const latRad = (Math.PI / 180) * latitude;
+	const lonRad = (Math.PI / 180) * longitude;
+
+	// calculate Julian centuries since J2000.0
+	const T = (julianDay - 2451545.0) / 36525.0;
+
+	// calculate Greenwich mean sidereal time (GMST) in radians
+	// SE - NOTE: I think this is some 3rd order approximation
+	const GMST = (280.46061837 + 360.98564736629 * (julianDay - 2451545.0) +
+	0.000387933 * T * T - (T * T * T) / 38710000.0) % 360;
+	const GMSTRad = (Math.PI / 180) * GMST;
+
+	// calculate local sidereal time (LST) in radians
+	const LST = GMSTRad + lonRad;
+
+	// convert right ascension and declination to radians
+	const raRad = (Math.PI / 180) * rightAscensionJ2000;
+	const decRad = (Math.PI / 180) * declinationJ2000;
+
+	// calculate hour angle (HA) in radians
+	const HA = LST - raRad;
+
+	// calculate altitude in radians
+	const sinAlt = Math.sin(decRad) * Math.sin(latRad) +
+	Math.cos(decRad) * Math.cos(latRad) * Math.cos(HA);
+	const altitude = Math.asin(sinAlt);
+
+	// calculate azimuth in radians
+	const cosAz = (Math.sin(decRad) - Math.sin(altitude) * Math.sin(lat))
+		/ (Math.cos(altitude) * Math.cos(latRad));
+	const sinAz = -Math.cos(decRad) * Math.sin(HA) / Math.cos(altitudeRad);
+	let azimuth = Math.atan2(sinAz, cosAz);
+	if (azimuth < 0)
+	{
+		azimuth += 2 * Math.PI; // Adjust azimuth to the range of 0 to 2pi
+	}
+
+	// SE - NOTE: we leave it in radians
+	// the parameters being in degrees are just a convenience
+	return { altitude, azimuth };
+}
+
+function RA(hours, minutes, seconds)
+{
+	// calculate the total right ascension in hours
+	const totalRA = hours + (minutes / 60) + (seconds / 3600);
+
+	// convert right ascension from hours to degrees
+	return totalRA * 15;
+}
+
+function Dec(degrees, minutes, seconds)
+{
+	return degrees + minutes / 60 + seconds / 3600;
+}
+
+function evaluateSopdetLocalPosition(julianDay, latitude, longitude)
+{
+	// TODO: take distance and proper motion into accounts and model
+	// the 3d motion of the star to generate RA and Dec for the
+	// correct epoch
+	const sopdetCelestialCoordinatesJ2000 =
+	[
+		RA(6, 45, 8.91728),
+		Dec(-16, 42, 58.0171)
+	];
+
+	// TODO: this assumes the Earth is oriented precisely as it was on J2000.0
+	// adjusting with precession and nutation should improve accuracy
+	return calculateAltitudeAzimuth(
+		julianDay,
+		sopdetCelestialCoordinatesJ2000[0],
+		sopdetCelestialCoordinatesJ2000[1],
+		latitude, longitude);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -682,7 +764,7 @@ function clickDay(dayNumber)
 		applyChanges();
 		return;
 	}
-	
+
 	firstCall = false;
 	let gregorianDate = new Date(wepRonpetDate);
 	gregorianDate.setDate(gregorianDate.getDate() + (dayNumber - 1));
@@ -699,7 +781,7 @@ function clickDay(dayNumber)
 	{
 		descriptionHTML = '<div class="sidebar-today-title">Today</div>' + descriptionHTML;
 	}
-	
+
 	descriptionHTML += '<div class="sidebar-date-simple">' + gregorianDate.toISOString().substring(0, 10) + " / day " + dayNumber.toString() + "</div>";
 	if(festivalDataUCL.has(dayNumber))
 	{
