@@ -343,6 +343,58 @@ body
 // this is not necessarily the best way to do this, but allows copy-pasting
 // the address-bar without introducing multiple points of failure
 
+///////////////////////////////////////////////////////////////////////////////
+// astronomical mathematics stuff
+///////////////////////////////////////////////////////////////////////////////
+
+function gregorianToJulianDay(year, month, day)
+{
+	// adjust month and year for calculation purposes
+	// we need february to be 'last' when calculating the days from months
+	if (month <= 2)
+	{
+		month += 12;
+		year -= 1;
+	}
+
+	// perform the Julian day calculation
+	const centurySkippedLeapDays = Math.floor(year / 100);
+	const fourCenturyLeapDays = Math.floor(centurySkippedLeapDays / 4);
+	const leapDaysAdjustment = 2 - centurySkippedLeapDays + fourCenturyLeapDays;
+	const daysFromYears = Math.floor(365.25 * (year + 4716));
+
+	const daysFromMonths = Math.floor(30.6001 * (month + 1));
+	// 30.6 creates the correct pattern of 30/31 day months
+	// the extra 0.0001 looks like fine tuning to ensure correct rounding
+	// together with the initial month and year adjustments this lets us work
+	// out the days to add from the month number allowing us to handle the
+	// special case of February by ignoring it.
+	
+	// evaluating f for the input values of month and looking at differences
+	// shows a pattern alternating between 30 and 31, with 31 repeated. 
+	
+	/*
+		Month: 3, Result: 122, Difference: ???	// (no previous month)
+		Month: 4, Result: 153, Difference: 31	// march
+		Month: 5, Result: 183, Difference: 30	// april
+		Month: 6, Result: 214, Difference: 31	// may
+		Month: 7, Result: 244, Difference: 30	// june
+		Month: 8, Result: 275, Difference: 31	// july
+		Month: 9, Result: 306, Difference: 31	// august
+		Month: 10, Result: 336, Difference: 30	// september
+		Month: 11, Result: 367, Difference: 31	// october
+		Month: 12, Result: 397, Difference: 30	// november
+		Month: 13, Result: 428, Difference: 31	// december
+		Month: 14, Result: 459, Difference: 31	// january
+	*/
+
+	return leapDaysAdjustment + day + daysFromYears + daysFromMonths - 1524.5;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// main script body
+///////////////////////////////////////////////////////////////////////////////
+
 const queryString = window.location.search;
 const urlParams = new URLSearchParams(queryString);
 
