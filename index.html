@@ -37,6 +37,28 @@ body
 	font-size: 135%;
 }
 
+.location-choice
+{
+	width: 10%;
+}
+
+.custom-latitude
+{
+	width: 10%;
+}
+
+.custom-longitude
+{
+	width: 10%;
+}
+
+.sopdet-visible-warning
+{
+	font-size: 85%;
+	font-weight: bold;
+	color: #a00;
+}
+
 .calendar-display
 {
 	width: 70%;
@@ -55,7 +77,7 @@ body
 
 .sidebar-today-title
 {
-	color: #a00;
+	color: #00a;
 }
 
 .sidebar-end-of-decan
@@ -217,6 +239,11 @@ body
 		font-size: 200%;
 	}
 
+	.location-choice
+	{
+		width: 15%;
+	}
+
 	.months li
 	{
 		width:46.5%;
@@ -260,6 +287,11 @@ body
 	.title
 	{
 		font-size: 111%;
+	}
+
+	.location-choice
+	{
+		width: 15%;
 	}
 
 	.months li
@@ -309,12 +341,29 @@ body
 	<label for="wep-ronpet">Wep Ronpet Date (Gregorian):</label>
 	<input type="date" id="wep-ronpet" name="wep-ronpet">
 	<button type="button" onclick='applyChanges();'>Change Date</button>
-	<label for="month-names"Month Names:</label>
+	<hr>
+	<label for="month-names">Month Names:</label>
 	<select name="month-names" id="month-names" onchange="updateMonthStyle()">
 		<option value="0">Middle Kingdom</option>
 		<option value="1">New Kingdom</option>
 		<option value="2">Greek</option>
 	</select>
+	<hr>
+	<label for="location-choice">Location:</label>
+	<select class="location-choice" name="location-choice" id="location-choice" onchange="applyLocationSelection()">
+		<option value="0">Custom</option>
+		<option value="1">London, UK - Greenwich Observatory</option>
+		<option value="2">Giza, Egypt - Great Pyramid</option>
+	</select>
+	<label for="custom-latitude"Latitude:</label>
+	<input class="custom-latitude" name="custom-latitude" id="custom-latitude" type="text">
+	<label for="custom-longitude"Longitude:</label>
+	<input class="custom-longitude" name="custom-longitude" id="custom-longitude" type="text">
+	<button type="button" onclick='applyLocation();'>Apply</button>
+	<button type="button" onclick='geolocate();'>Use Current Location</button>
+	<div class="sopdet-visible-warning" id="sopdet-visible-warning">
+	WARNING: Sopdet never rises at this latitude!
+	</div>
 </div>
 <hr>
 <div>
@@ -473,6 +522,14 @@ function evaluateSopdetLocalPosition(julianDay, latitude, longitude)
 		latitude, longitude);
 }
 
+const sopdetMaxVisibleLatitude = 90 + Dec(-16, 42, 58.0171);
+
+const locations =
+[
+	[51.4769, -0.0005], // Greenwich Observatory
+	[29.9792, 31.1342], // Great Pyramid of Giza
+];
+
 ///////////////////////////////////////////////////////////////////////////////
 // main script body
 ///////////////////////////////////////////////////////////////////////////////
@@ -502,6 +559,39 @@ if(urlParams.has('selected-day'))
 {
 	selectedDay = parseInt(urlParams.get('selected-day'));
 }
+
+// location
+let selectedLocation = 1;
+let selectedLatitude = locations[0][0];
+let selectedLongitude = locations[0][1];
+if(urlParams.has('selected-location'))
+{
+	selectedLocation = parseInt(urlParams.get('selected-location'));
+	if(selectedLocation > 0)
+	{
+		selectedLatitude = locations[selectedLocation - 1][0];
+		selectedLongitude = locations[selectedLocation - 1][1];
+	}
+}
+
+if(selectedLocation == 0)
+{
+	if(urlParams.has('latitude'))
+	{
+		selectedLatitude = parseInt(urlParams.get('latitude'));
+	}
+	if(urlParams.has('longitude'))
+	{
+		selectedLongitude = parseInt(urlParams.get('longitude'));
+	}
+}
+
+// set the values
+document.getElementById('location-choice').value = selectedLocation;
+document.getElementById('custom-latitude').value = selectedLatitude;
+document.getElementById('custom-longitude').value = selectedLongitude;
+document.getElementById('sopdet-visible-warning').style.display =
+	(selectedLatitude >= sopdetMaxVisibleLatitude) ? 'block' : 'none';
 
 // set the date in the picker
 let datePicker = document.getElementById('wep-ronpet');
@@ -747,12 +837,66 @@ function updateMonthStyle()
 	applyChanges();
 }
 
+function applyLocationSelection()
+{
+	selectedLocation = document.getElementById('location-choice').value;
+	applyChanges();
+}
+
+function applyLocation()
+{
+	selectedLocation = 0;
+	selectedLatitude = document.getElementById('custom-latitude').value;
+	selectedLongitude = document.getElementById('custom-longitude').value;
+	applyChanges();
+}
+
+function updateLocationFromAPI(position)
+{
+	selectedLocation = 0;
+	document.getElementById('custom-latitude').value = position.coords.latitude;
+	document.getElementById('custom-longitude').value = position.coords.longitude;
+
+	applyLocation();
+}
+
+function geolocate()
+{
+	if (navigator.geolocation)
+	{
+		navigator.geolocation.getCurrentPosition(updateLocationFromAPI);
+	}
+	else
+	{
+		alert("Geolocation API is not supported!");
+	}
+}
+
 function applyChanges()
 {
-	window.location = window.location.pathname
-		+ "?wep-ronpet=" + datePicker.value
-		+ "&selected-day=" + selectedDay
-		+ "&month-style=" + monthStyle;
+	let newLocation = window.location.pathname
+		+ "?wep-ronpet=" + datePicker.value;
+	if(((today >= 1) ? today : 1) != selectedDay)
+	{
+		newLocation += "&selected-day=" + selectedDay;
+	}
+
+	if(monthStyle != 0)
+	{
+		newLocation += "&month-style=" + monthStyle;
+	}
+
+	if(selectedLocation == 0)
+	{
+		newLocation += "&selected-location=0&latitude="
+			+ selectedLatitude + "&latitude=" + selectedLongitude;
+	}
+	else if(selectedLocation != 1)
+	{
+		newLocation += "&selected-location=" + selectedLocation;
+	}
+
+	window.location = newLocation;
 }
 
 var firstCall = true;
