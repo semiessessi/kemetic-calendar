@@ -163,7 +163,8 @@ body
 	padding: 0;
 	margin: 0;
 	align-items: center;
-	justify-content: space-between;
+	justify-content: center;
+	justify-items: center;
 	text-align: center;
 	gap: 0;
 }
@@ -186,6 +187,12 @@ body
 	border-style: solid;
 	border-color: #ffffff;
 	width: 100% !important;
+}
+
+.intercalary .days li
+{
+	grid-template-columns: repeat(5, 1fr);
+	width: 66% !important;
 }
 
 .festival-date
