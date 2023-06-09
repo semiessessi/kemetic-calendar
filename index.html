@@ -233,6 +233,11 @@ body
 	{
 		width:29.5%;
 	}
+	
+	.intercalary li
+	{
+		width: 30%;
+	}
 }
 
 @media (max-aspect-ratio: 6/5)
@@ -255,6 +260,11 @@ body
 	.months li
 	{
 		width:46.5%;
+	}
+	
+	.intercalary li
+	{
+		width: 50%;
 	}
 
 	.sidebar
@@ -292,6 +302,11 @@ body
 	.months li
 	{
 		width:96.5%;
+	}
+	
+	.intercalary li
+	{
+		width: 96.5%;
 	}
 
 	.sidebar
@@ -437,6 +452,9 @@ function gregorianToJulianDay(year, month, day)
 
 function getGMST(julianDay)
 {
+	// based on this expression for GMST in seconds
+	// http://www.astro.sunysb.edu/metchev/AST443/times.html
+
 	// convert Julian Day to centuries since J2000.0
 	const t = (julianDay - 2451545.0) / 36525;
 
@@ -451,21 +469,22 @@ function getGMST(julianDay)
 
 	// evaluate GSMT using the terms
 	let gmst = 0;
-	let tPower = t;
+	let tPower = 1;
 	for (let i = 0; i < terms.length; i++)
 	{
-		gmst += (terms[i] / 3600.0) * tPower;
+		gmst += terms[i] * tPower;
 		tPower *= t;
 	}
 
 	// convert the GMST to the range 0-24 hours
-	gmst = gmst % 24;
+	gmst = (gmst / 3600.0) % 24;
 	if (gmst < 0)
 	{
 		gmst += 24;
 	}
 
-	return gmst;
+	// return GMST as degrees
+	return gmst * 15;
 }
 
 // 7th order calculation of obliquity of the ecliptic
@@ -489,10 +508,10 @@ function calculateObliquity(julianDay)
 
 	// calculate the obliquity of the ecliptic using the terms
 	let obliquity = 23.0 + (26.0 / 60.0) + (21.448 / 3600.0);
-	let tPower = t;
+	let tPower = 1;
 	for (let i = 0; i < terms.length; i++)
 	{
-		obliquity += terms[i] / 3600.0 * tPower;
+		obliquity += (terms[i] / 3600.0) * tPower;
 		tPower *= t;
 	}
 
@@ -517,8 +536,7 @@ function calculateNutationLongitude(julianDay)
 	const l = 218.3164591 + t * (481267.88134236 - t * (0.0013268 + t * (1.0 / 538841.0 -  t / 65194000.0)));
 
 	// mean anomaly of the Sun
-	// (the polynomial is evaluated using Horner's scheme)
-	const m = 357.5291092 + t * (35999.0502909 - t * (0.0001536 + t / 24490000.0));
+	const m = solarMeanAnomaly(julianDay);
 
 	// mean anomaly of the Moon
 	const ms = 134.9634114 + t * (477198.8676313 + t * (0.008997 + t * (1.0 / 69699.0 - t / 14712000.0)));
@@ -533,9 +551,7 @@ function calculateNutationLongitude(julianDay)
 	const deltaPsi = (-17.20 * Math.sin(omega) - 1.32 * Math.sin(2 * l) - 0.23 * Math.sin(2 * m) + 0.21 * Math.sin(2 * omega)) / 3600.0;
 
 	// Convert the nutation to radians
-	const nutationLonRad = degreesToRadians(deltaPsi);
-
-	return nutationLonRad;
+	return degreesToRadians(deltaPsi);
 }
 
 // this produces altitude an azimuth with corrections around J2000.0
@@ -583,52 +599,6 @@ function calculateAltitudeAzimuth(
 	return [ altitude, azimuth ];
 }
 
-function calculateAltitudeAzimuth(
-	julianDay, rightAscensionJ2000, declinationJ2000, latitude, longitude)
-{
-	// convert latitude and longitude to radians
-	const latRad = degreesToRadians(latitude);
-	const lonRad = degreesToRadians(longitude);
-
-	// calculate Julian centuries since J2000.0
-	const T = (julianDay - 2451545.0) / 36525.0;
-
-	// calculate Greenwich mean sidereal time (GMST) in radians
-	// SE - NOTE: I think this is some 3rd order approximation
-	const GMST = (280.46061837 + 360.98564736629 * (julianDay - 2451545.0) +
-		0.000387933 * T * T - (T * T * T) / 38710000.0) % 360;
-	const GMSTRad = degreesToRadians(GMST);
-
-	// calculate local sidereal time (LST) in radians
-	const LST = GMSTRad + lonRad;
-
-	// convert right ascension and declination to radians
-	const raRad = degreesToRadians(rightAscensionJ2000);
-	const decRad = degreesToRadians(declinationJ2000);
-
-	// calculate hour angle (HA) in radians
-	const HA = LST - raRad;
-
-	// calculate altitude in radians
-	const sinAlt = Math.sin(decRad) * Math.sin(latRad) +
-	Math.cos(decRad) * Math.cos(latRad) * Math.cos(HA);
-	const altitude = Math.asin(sinAlt);
-
-	// calculate azimuth in radians
-	const cosAz = (Math.sin(decRad) - Math.sin(altitude) * Math.sin(lat))
-		/ (Math.cos(altitude) * Math.cos(latRad));
-	const sinAz = -Math.cos(decRad) * Math.sin(HA) / Math.cos(altitudeRad);
-	let azimuth = Math.atan2(sinAz, cosAz);
-	if (azimuth < 0)
-	{
-		azimuth += 2 * Math.PI; // Adjust azimuth to the range of 0 to 2pi
-	}
-
-	// SE - NOTE: we leave it in radians
-	// the parameters being in degrees are just a convenience
-	return [ altitude, azimuth ];
-}
-
 function RA(hours, minutes, seconds)
 {
 	// calculate the total right ascension in hours
@@ -668,41 +638,42 @@ function calculateSunRaDec(julianDay)
 	const t = (julianDay - 2451545.0) / 36525;
 
 	// calculate mean longitude of the Sun
-	const meanLongitude = 280.46646 + 36000.76983 * t + 0.0003032 * t * t;
+	const meanLongitude = 280.46646 + t * (36000.76983 + 0.0003032 * t);
 
 	// calculate mean anomaly of the Sun
-	const meanAnomaly = 357.52911 + 35999.05029 * t - 0.0001537 * t * t;
+	const meanAnomaly = degreesToRadians(solarMeanAnomaly(julianDay));
 
 	// calculate ecliptic longitude of the Sun
 	const eclipticLongitude = meanLongitude
-		+ 1.914602 * Math.sin(degreesToRadians(meanAnomaly))
-		+ 0.019993 * Math.sin(degreesToRadians(2 * meanAnomaly));
+		+ 1.914602 * Math.sin(meanAnomaly)
+		+ 0.019993 * Math.sin(2 * meanAnomaly);
 
 	// calculate the obliquity of the ecliptic
-	const eclipticObliquity = calculateObliquity(julianDay);
+	const eclipticObliquity = degreesToRadians(calculateObliquity(julianDay));
 
 	// calculate right ascension
 	const ra = radiansToDegrees(
-		Math.atan2(Math.cos(degreesToRadians(eclipticObliquity))
-			* Math.sin(degreesToRadians(eclipticLongitude)),
-		Math.cos(degreesToRadians(eclipticLongitude))));
+		Math.atan2(
+			Math.cos(eclipticObliquity)
+				* Math.sin(eclipticLongitude),
+			Math.cos(eclipticLongitude)));
 
 	// calculate declination
 	const dec = radiansToDegrees(
-		Math.asin(Math.sin(degreesToRadians(eclipticObliquity))
-			* Math.sin(degreesToRadians(eclipticLongitude))));
+		Math.asin(Math.sin(eclipticObliquity)
+			* Math.sin(eclipticLongitude)));
 
 	return [ra, dec];
 }
 
 // calculate position of Sun in the for a given time and place
-function evaulateSunCoordinates(julianDay, latitude, longitude)
+function evaluateSunCoordinates(julianDay, latitude, longitude)
 {
 	let sunRADec = calculateSunRaDec(julianDay);
-	calculateAltitudeAzimuth(
+	return calculateAltitudeAzimuth(
 		julianDay,
-		sunRaDec[0],
-		sunRaDec[1],
+		sunRADec[0],
+		sunRADec[1],
 		latitude,
 		longitude);
 }
@@ -714,11 +685,28 @@ const locations =
 	[29.9792, 31.1342], // Great Pyramid of Giza
 ];
 
-// we assume midnight is cool for sunrise ?
-// but using the differential should ensure that it works across the whole range)
-function calculateSunRise(julianMidnight, latitude, longitude)
+function calculateNextSunRise(julianDay, latitude, longitude)
 {
-	
+	// try to find a point where the sun is below the horizon to start...
+	// work out its position at each hour for the next 24 hours to start.
+	// it is simple minded but allows a binary search to complete the problem.
+	// ... in most cases
+	let hoursSunAltAz = new Array(24);
+	hoursSunAltAz[0] = evaluateSunCoordinates(julianDay, latitude, longitude);
+	let lastSunAz = hoursSunAltAz[0][0];
+	let riseHour = -1;
+	let timeStep = 1.0 / 24.0;
+	for(let i = 1; i < 24; ++i)
+	{
+		hoursSunAltAz[i] = evaluateSunCoordinates(
+			julianDay + i*timeStep, latitude, longitude);
+		if(hoursSunAltAz[i][0] > 0.0 && lastSunAz[0] < 0.0)
+		{
+			riseHour = i;
+			break;
+		}
+	}
+	return hoursSunAltAz;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -787,6 +775,12 @@ document.getElementById('sopdet-visible-warning').style.display =
 // set the date in the picker
 let datePicker = document.getElementById('wep-ronpet');
 datePicker.value = wepRonpetDate.toISOString().substring(0, 10);
+
+let gregorianDate = new Date(wepRonpetDate);
+gregorianDate.setDate(gregorianDate.getDate() + (selectedDay - 1));
+let gregorianYear = gregorianDate.getFullYear();
+let gregorianMonth = gregorianDate.getMonth() + 1;
+let gregorianDay = gregorianDate.getDate();
 
 const seasonMonths =
 [
@@ -1047,6 +1041,8 @@ function updateLocationFromAPI(position)
 	selectedLocation = 0;
 	document.getElementById('custom-latitude').value = position.coords.latitude;
 	document.getElementById('custom-longitude').value = position.coords.longitude;
+	//selectedLatitude = position.coords.latitude;
+	//selectedLongitude = position.coords.longitude;
 
 	applyLocation();
 }
@@ -1106,8 +1102,6 @@ function clickDay(dayNumber)
 	}
 
 	firstCall = false;
-	let gregorianDate = new Date(wepRonpetDate);
-	gregorianDate.setDate(gregorianDate.getDate() + (dayNumber - 1));
 	let month =  Math.floor((selectedDay - 1) / 30);
 	let dayInMonth = ((selectedDay - 1) % 30) + 1;
 	let descriptionHTML = '<div class = "sidebar-title">' + seasonMonths[month] + ", " + dayInMonth.toString() + "</div>";
@@ -1122,21 +1116,35 @@ function clickDay(dayNumber)
 		descriptionHTML = '<div class="sidebar-today-title">Today</div>' + descriptionHTML;
 	}
 
-	descriptionHTML += '<div class="sidebar-date-simple">' + gregorianDate.toISOString().substring(0, 10) + " / day " + dayNumber.toString() + "</div>";
+	descriptionHTML += '<div class="sidebar-date-simple">'
+		+ gregorianDay + "/" + gregorianMonth + "/" + gregorianYear
+		+ " / day " + dayNumber.toString()
+		+ " / JD " + gregorianToJulianDay(gregorianYear, gregorianMonth, gregorianDay) + "</div>";
 	if(festivalDataUCL.has(dayNumber))
 	{
 		descriptionHTML += "<hr><div>" + festivalDataUCL.get(dayNumber) + "</div>";
 	}
 	
+	// temporary stuff for showing information useful for debugging.
+	/*
 	if((window.location.pathname[0] == '/')
 		&& (window.location.pathname[1] = 'C'))
 	{
-		descriptionHTML += "DEBUG";
+		descriptionHTML += "DEBUG:";
+		descriptionHTML += JSON.stringify(debuggings, null, 4);
 	}
+	//*/
 	sidebar.innerHTML = descriptionHTML;
 }
 
+// debugs
+let debugsGregorianDate = new Date(wepRonpetDate);
+debugsGregorianDate.setDate(debugsGregorianDate.getDate() + (selectedDay - 1));
+let foob = gregorianToJulianDay(debugsGregorianDate.getYear(), debugsGregorianDate.getMonth() + 1, debugsGregorianDate.getDate());
+let debuggings = calculateNextSunRise(foob, selectedLatitude, selectedLongitude);
+
 clickDay(selectedDay);
+
 </script>
 
 </body>
