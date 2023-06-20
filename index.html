@@ -399,6 +399,16 @@ body
 // astronomical mathematics stuff
 ///////////////////////////////////////////////////////////////////////////////
 
+function accuracy(a, b)
+{
+	return Math.abs(a - b) / Math.abs(b);
+}
+
+function isWithinTolerance(a, b, proportion)
+{
+	return accuracy(a, b) < proportion;
+}
+
 // helper function to convert degrees to radians
 function degreesToRadians(degrees)
 {
@@ -422,7 +432,7 @@ function RA(hours, minutes, seconds)
 
 function Dec(degrees, minutes, seconds)
 {
-	return degrees + minutes / 60 + seconds / 3600;
+	return degrees + (minutes / 60) + (seconds / 3600);
 }
 
 function displayAltAz(v)
@@ -512,7 +522,9 @@ function getGMSTSeconds(julianDay)
 	// evaluate GSMT0 using the terms
 	// based on this expression for GMST in seconds
 	// http://www.astro.sunysb.edu/metchev/AST443/times.html
-	const gmst0 = evaluateSeriesPolynomial(terms, t);
+	const jMidnight = julianDay - ((julianDay - 0.5) % 1.0);
+	const tMidnight = toJulianCenturiesSinceJ2000(jMidnight);
+	const gmst0 = evaluateSeriesPolynomial(terms, tMidnight);
 	
 	// this was found on stack exchange...
 	const wTerms =
@@ -524,7 +536,7 @@ function getGMSTSeconds(julianDay)
 	const wStar = evaluateSeriesPolynomial(wTerms, t);
 	
 	// get the time of day in seconds from midnight
-	const utcSeconds = ((julianDay - 0.5) % 1.0) * 24 * 3600;
+	const utcSeconds = (julianDay - jMidnight) * 24 * 3600;
 	
 	// calculate mod number of seconds in the day...
 	return (gmst0 + wStar * utcSeconds) % 86400;
@@ -749,12 +761,26 @@ function testJulianDay01Jan2019()
 	const testValue = gregorianToJulianDay(2019,1,1);
 	return [ "Julian day number for 2019-1-1 = 2458484.5",
 		(testValue == 2458484.5)
-			? passedHtml : (failedHtml + ", expected 2458484.5 " + testValue)];
+			? passedHtml : (failedHtml + ", expected 2458484.5, got " + testValue)];
+}
+
+function testGMST01Jan20190800()
+{
+	// checked here, as other calculators seemed to make errors:
+	// https://phpsciencelabs.com/sidereal-time-calculator/index.php
+	// note it only goes to 3dp...
+	const testValue = getGMSTSeconds(2458484.5 + (8 / 24));
+	return [ "GMST at 2019-1-1 08:00:00",
+		isWithinTolerance(testValue, 52965.379, 0.001)
+			? (passedHtml + ", accuracy = " + accuracy(testValue, 52965.379)*100 + "%")
+			: (failedHtml + ", expected 52965.37916293584, got " + testValue)];
 }
 
 const testFunctions =
 [
-	testJulianDay01Jan2019
+	testJulianDay01Jan2019,
+	testGMST01Jan20190800,
+	
 ];
 
 ///////////////////////////////////////////////////////////////////////////////
