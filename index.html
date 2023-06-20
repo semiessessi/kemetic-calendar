@@ -37,6 +37,11 @@ body
 	font-size: 135%;
 }
 
+.test-line
+{
+	font-size: 75%;
+}
+
 .location-choice
 {
 	width: 10%;
@@ -406,6 +411,44 @@ function radiansToDegrees(radians)
 	return (180 / Math.PI) * radians;
 }
 
+function RA(hours, minutes, seconds)
+{
+	// calculate the total right ascension in hours
+	const totalRA = hours + (minutes / 60) + (seconds / 3600);
+
+	// convert right ascension from hours to degrees
+	return totalRA * 15;
+}
+
+function Dec(degrees, minutes, seconds)
+{
+	return degrees + minutes / 60 + seconds / 3600;
+}
+
+function displayAltAz(v)
+{
+	return [
+		radiansToDegrees(v[0]),
+		radiansToDegrees(v[1]) ];
+}
+
+function toJulianCenturiesSinceJ2000(julianDay)
+{
+	return (julianDay - 2451545.0) / 36525;
+}
+
+// evaluate a polynomial from a list of coefficients
+function evaluateSeriesPolynomial(terms, t)
+{
+	let evaluation = terms[terms.length - 1];
+	for (let i = (terms.length - 2); i >= 0; --i)
+	{
+		evaluation *= t;
+		evaluation += terms[i];
+	}
+	return evaluation;
+}
+
 function gregorianToJulianDay(year, month, day)
 {
 	// adjust month and year for calculation purposes
@@ -450,13 +493,12 @@ function gregorianToJulianDay(year, month, day)
 	return leapDaysAdjustment + day + daysFromYears + daysFromMonths - 1524.5;
 }
 
-function getGMST(julianDay)
+// NOTE: most astronmical code works in degrees and other unhelpful units for
+// trigonometry, so many of these functions do the same
+function getGMSTSeconds(julianDay)
 {
-	// based on this expression for GMST in seconds
-	// http://www.astro.sunysb.edu/metchev/AST443/times.html
-
 	// convert Julian Day to centuries since J2000.0
-	const t = (julianDay - 2451545.0) / 36525;
+	const t = toJulianCenturiesSinceJ2000(julianDay);
 
 	// terms for GMST expression
 	const terms =
@@ -467,60 +509,61 @@ function getGMST(julianDay)
 		-6.2e-6
 	];
 
-	// evaluate GSMT using the terms
-	let gmst = 0;
-	let tPower = 1;
-	for (let i = 0; i < terms.length; i++)
-	{
-		gmst += terms[i] * tPower;
-		tPower *= t;
-	}
-
-	// convert the GMST to the range 0-24 hours
-	gmst = (gmst / 3600.0) % 24;
-	if (gmst < 0)
-	{
-		gmst += 24;
-	}
-
-	// return GMST as degrees
-	return gmst * 15;
+	// evaluate GSMT0 using the terms
+	// based on this expression for GMST in seconds
+	// http://www.astro.sunysb.edu/metchev/AST443/times.html
+	const gmst0 = evaluateSeriesPolynomial(terms, t);
+	
+	// this was found on stack exchange...
+	const wTerms =
+	[
+		1.00273790935,
+		5.9e-11
+	];
+	
+	const wStar = evaluateSeriesPolynomial(wTerms, t);
+	
+	// get the time of day in seconds from midnight
+	const utcSeconds = ((julianDay - 0.5) % 1.0) * 24 * 3600;
+	
+	// calculate mod number of seconds in the day...
+	return (gmst0 + wStar * utcSeconds) % 86400;
 }
 
-// 7th order calculation of obliquity of the ecliptic
-function calculateObliquity(julianDay)
+// 10th order calculation of obliquity of the ecliptic
+// claims to be valid over 10,000 years
+function calculateMeanObliquityOfEcliptic(julianDay)
 {
+	// this is based on a table and J. Laskar's formula
+	// in Astronomy and Astrophysics, Vol 157
+
 	// convert Julian Day to centuries since J2000.0
-	const t = (julianDay - 2451545.0) / 36525;
+	const t = toJulianCenturiesSinceJ2000(julianDay);
 
 	// terms for the obliquity evaluation
 	const terms =
 	[
 		84381.448,
-		-46.8150,
-		-0.00059,
-		0.001813,
-		-0.000014,
-		-0.00000050,
-		-0.0000000042,
-		0.000000000017
+		-4680.93,
+		-1.55,
+		1999.25,
+		-51.38,
+		-249.67,
+		-39.05,
+		7.12,
+		27.87,
+		5.79,
+		2.45
 	];
 
-	// calculate the obliquity of the ecliptic using the terms
-	let obliquity = 23.0 + (26.0 / 60.0) + (21.448 / 3600.0);
-	let tPower = 1;
-	for (let i = 0; i < terms.length; i++)
-	{
-		obliquity += (terms[i] / 3600.0) * tPower;
-		tPower *= t;
-	}
-
-	return obliquity;
+	const arcseconds = evaluateSeriesPolynomial(terms, t);
+	const degrees = arcseconds / 3600.0;
+	return degreesToRadians(degrees);
 }
 
 function solarMeanAnomaly(julianDay)
 {
-	const t = (julianDay - 2451545.0) / 36525;
+	const t = toJulianCenturiesSinceJ2000(julianDay);
 	// mean anomaly of the Sun
 	// (the polynomial is evaluated using Horner's scheme)
 	return 357.5291092 + t * (35999.0502909 - t * (0.0001536 + t / 24490000.0));
@@ -529,7 +572,7 @@ function solarMeanAnomaly(julianDay)
 function calculateNutationLongitude(julianDay)
 {
 	// convert Julian Day to centuries since J2000.0
-	const t = (julianDay - 2451545.0) / 36525;
+	const t = toJulianCenturiesSinceJ2000(julianDay);
 
 	// mean elongation of the Moon from the Sun
 	// (the polynomial is evaluated using Horner's scheme)
@@ -558,7 +601,7 @@ function calculateNutationLongitude(julianDay)
 function calculateAltitudeAzimuth(
 	julianDay, raJ2000, decJ2000, latitude, longitude)
 {
-	const obliquity = calculateObliquity(julianDay);
+	const obliquity = degreesToRadians(23.44);//calculateMeanObliquityOfEcliptic(julianDay);
 	const nutation = calculateNutationLongitude(julianDay);
 
 	// convert latitude and longitude to radians
@@ -570,7 +613,14 @@ function calculateAltitudeAzimuth(
 	const decRad = degreesToRadians(decJ2000);
 
 	// calculate the Greenwich mean sidereal time (GMST)
-	const gmst = getGMST(julianDay);
+	// put it into hours...
+	let gmst = (getGMSTSeconds(julianDay) / 3600) % 24 ;
+	if(gmst < 0)
+	{
+		gmst += 24;
+	}
+	// then degrees... then radians
+	gmst = degreesToRadians(15 * gmst);
 
 	// calculate the local sidereal time (LST)
 	const lst = gmst + lonRad;
@@ -599,20 +649,6 @@ function calculateAltitudeAzimuth(
 	return [ altitude, azimuth ];
 }
 
-function RA(hours, minutes, seconds)
-{
-	// calculate the total right ascension in hours
-	const totalRA = hours + (minutes / 60) + (seconds / 3600);
-
-	// convert right ascension from hours to degrees
-	return totalRA * 15;
-}
-
-function Dec(degrees, minutes, seconds)
-{
-	return degrees + minutes / 60 + seconds / 3600;
-}
-
 // calculate sopdet location for a given time and place
 function evaluateSopdetLocalPosition(julianDay, latitude, longitude)
 {
@@ -634,36 +670,7 @@ function evaluateSopdetLocalPosition(julianDay, latitude, longitude)
 
 function calculateSunRaDec(julianDay)
 {
-	// convert Julian Day to centuries since J2000.0
-	const t = (julianDay - 2451545.0) / 36525;
-
-	// calculate mean longitude of the Sun
-	const meanLongitude = 280.46646 + t * (36000.76983 + 0.0003032 * t);
-
-	// calculate mean anomaly of the Sun
-	const meanAnomaly = degreesToRadians(solarMeanAnomaly(julianDay));
-
-	// calculate ecliptic longitude of the Sun
-	const eclipticLongitude = meanLongitude
-		+ 1.914602 * Math.sin(meanAnomaly)
-		+ 0.019993 * Math.sin(2 * meanAnomaly);
-
-	// calculate the obliquity of the ecliptic
-	const eclipticObliquity = degreesToRadians(calculateObliquity(julianDay));
-
-	// calculate right ascension
-	const ra = radiansToDegrees(
-		Math.atan2(
-			Math.cos(eclipticObliquity)
-				* Math.sin(eclipticLongitude),
-			Math.cos(eclipticLongitude)));
-
-	// calculate declination
-	const dec = radiansToDegrees(
-		Math.asin(Math.sin(eclipticObliquity)
-			* Math.sin(eclipticLongitude)));
-
-	return [ra, dec];
+	return [0, 0];
 }
 
 // calculate position of Sun in the for a given time and place
@@ -693,21 +700,62 @@ function calculateNextSunRise(julianDay, latitude, longitude)
 	// ... in most cases
 	let hoursSunAltAz = new Array(24);
 	hoursSunAltAz[0] = evaluateSunCoordinates(julianDay, latitude, longitude);
-	let lastSunAz = hoursSunAltAz[0][0];
+	let lastSunAlt = hoursSunAltAz[0][0];
 	let riseHour = -1;
 	let timeStep = 1.0 / 24.0;
-	for(let i = 1; i < 24; ++i)
+	for(let i = 1; i < 96; ++i)
 	{
 		hoursSunAltAz[i] = evaluateSunCoordinates(
 			julianDay + i*timeStep, latitude, longitude);
-		if(hoursSunAltAz[i][0] > 0.0 && lastSunAz[0] < 0.0)
+		if(hoursSunAltAz[i][0] > 0.0 && lastSunAlt < 0.0)
 		{
 			riseHour = i;
-			break;
+			//break;
 		}
+		lastSunAlt = hoursSunAltAz[i][0];
 	}
 	return hoursSunAltAz;
 }
+
+function calculateSunrise(julianDay, longitude, latitude)
+{
+	const t = toJulianCenturiesSinceJ2000(julianDay);
+	const gmst = getGMST(julianDay);
+
+	// Convert longitude to radians
+	const lonRad = degreesToRadians(longitude);
+
+	// Convert latitude to radians
+	const latRad = toRadians(latitude);
+
+	// Calculate the hour angle at sunrise in radians
+	const hourAngle = Math.acos(Math.cos(degreesToRadians(90.833)) / (Math.cos(latRad) * Math.cos(getSunDeclination(julianDay))));
+
+	// Calculate the sunrise time
+	const sunriseTime = 24 - (hourAngle * 180 / Math.PI - lonRad * 180 / Math.PI - gmst) / 15;
+
+	return sunriseTime;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// tests for astronomical algorithms
+///////////////////////////////////////////////////////////////////////////////
+
+const passedHtml = '<span style="color:blue">PASSED</span>';
+const failedHtml = '<span style="color:red">FAILED</span>';
+
+function testJulianDay01Jan2019()
+{
+	const testValue = gregorianToJulianDay(2019,1,1);
+	return [ "Julian day number for 2019-1-1 = 2458484.5",
+		(testValue == 2458484.5)
+			? passedHtml : (failedHtml + ", expected 2458484.5 " + testValue)];
+}
+
+const testFunctions =
+[
+	testJulianDay01Jan2019
+];
 
 ///////////////////////////////////////////////////////////////////////////////
 // main script body
@@ -715,6 +763,13 @@ function calculateNextSunRise(julianDay, latitude, longitude)
 
 const queryString = window.location.search;
 const urlParams = new URLSearchParams(queryString);
+
+// test
+let test = false;
+if(urlParams.has('test'))
+{
+	test = true;
+}
 
 // key date
 let todayDate = new Date();
@@ -1091,6 +1146,7 @@ function applyChanges()
 	window.location = newLocation.replace('&', '?');
 }
 
+
 var firstCall = true;
 function clickDay(dayNumber)
 {
@@ -1126,11 +1182,16 @@ function clickDay(dayNumber)
 	}
 	
 	// temporary stuff for showing information useful for debugging.
-	/*
-	if((window.location.pathname[0] == '/')
-		&& (window.location.pathname[1] = 'C'))
+	///*
+	if(test)
 	{
-		descriptionHTML += "DEBUG:";
+		descriptionHTML += "<br>TESTS:<br>";
+		for(const testFunction of testFunctions)
+		{
+			const testResult = testFunction();
+			descriptionHTML += '<p class="test-line">Testing &quot;' + testResult[0] + '&quot; Result:' + testResult[1] + "</p>";
+		}
+		descriptionHTML += "<br><br>DEBUG:<br>";
 		descriptionHTML += JSON.stringify(debuggings, null, 4);
 	}
 	//*/
@@ -1140,8 +1201,8 @@ function clickDay(dayNumber)
 // debugs
 let debugsGregorianDate = new Date(wepRonpetDate);
 debugsGregorianDate.setDate(debugsGregorianDate.getDate() + (selectedDay - 1));
-let foob = gregorianToJulianDay(debugsGregorianDate.getYear(), debugsGregorianDate.getMonth() + 1, debugsGregorianDate.getDate());
-let debuggings = calculateNextSunRise(foob, selectedLatitude, selectedLongitude);
+let foob = gregorianToJulianDay(debugsGregorianDate.getFullYear(), debugsGregorianDate.getMonth() + 1, debugsGregorianDate.getDate());
+let debuggings = calculateNextSunRise(foob - 0.5, selectedLatitude, selectedLongitude);
 
 clickDay(selectedDay);
 
