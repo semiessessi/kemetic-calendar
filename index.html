@@ -435,6 +435,10 @@ function Dec(degrees, minutes, seconds)
 	return degrees + (minutes / 60) + (seconds / 3600);
 }
 
+function displayTimeOfDaySeconds(seconds)
+{
+	return (Math.floor(seconds / 3600)) + "h" + (Math.floor(seconds / 60) % 60) + "m" + (Math.floor(seconds) % 60) + "s";
+}
 function displayAltAz(v)
 {
 	return [
@@ -631,6 +635,7 @@ function calculateAltitudeAzimuth(
 	{
 		gmst += 24;
 	}
+
 	// then degrees... then radians
 	gmst = degreesToRadians(15 * gmst);
 
@@ -704,7 +709,7 @@ const locations =
 	[29.9792, 31.1342], // Great Pyramid of Giza
 ];
 
-function calculateNextSunRise(julianDay, latitude, longitude)
+function calculateNextSunrise(julianDay, latitude, longitude)
 {
 	// try to find a point where the sun is below the horizon to start...
 	// work out its position at each hour for the next 24 hours to start.
@@ -719,34 +724,14 @@ function calculateNextSunRise(julianDay, latitude, longitude)
 	{
 		hoursSunAltAz[i] = evaluateSunCoordinates(
 			julianDay + i*timeStep, latitude, longitude);
-		if(hoursSunAltAz[i][0] > 0.0 && lastSunAlt < 0.0)
+		if((riseHour < 0) && (hoursSunAltAz[i][0] > 0.0) && (lastSunAlt < 0.0))
 		{
 			riseHour = i;
 			//break;
 		}
 		lastSunAlt = hoursSunAltAz[i][0];
 	}
-	return hoursSunAltAz;
-}
-
-function calculateSunrise(julianDay, longitude, latitude)
-{
-	const t = toJulianCenturiesSinceJ2000(julianDay);
-	const gmst = getGMST(julianDay);
-
-	// Convert longitude to radians
-	const lonRad = degreesToRadians(longitude);
-
-	// Convert latitude to radians
-	const latRad = toRadians(latitude);
-
-	// Calculate the hour angle at sunrise in radians
-	const hourAngle = Math.acos(Math.cos(degreesToRadians(90.833)) / (Math.cos(latRad) * Math.cos(getSunDeclination(julianDay))));
-
-	// Calculate the sunrise time
-	const sunriseTime = 24 - (hourAngle * 180 / Math.PI - lonRad * 180 / Math.PI - gmst) / 15;
-
-	return sunriseTime;
+	return [ riseHour, hoursSunAltAz ];
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -780,7 +765,6 @@ const testFunctions =
 [
 	testJulianDay01Jan2019,
 	testGMST01Jan20190800,
-	
 ];
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1228,7 +1212,7 @@ function clickDay(dayNumber)
 let debugsGregorianDate = new Date(wepRonpetDate);
 debugsGregorianDate.setDate(debugsGregorianDate.getDate() + (selectedDay - 1));
 let foob = gregorianToJulianDay(debugsGregorianDate.getFullYear(), debugsGregorianDate.getMonth() + 1, debugsGregorianDate.getDate());
-let debuggings = calculateNextSunRise(foob - 0.5, selectedLatitude, selectedLongitude);
+let debuggings = calculateNextSunrise(foob - 0.5, selectedLatitude, selectedLongitude);
 
 clickDay(selectedDay);
 
