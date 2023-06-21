@@ -550,16 +550,22 @@ function getGMSTSeconds(julianDay)
 // claims to be valid over 10,000 years
 function calculateMeanObliquityOfEcliptic(julianDay)
 {
-	// this is based on a table and J. Laskar's formula
-	// in Astronomy and Astrophysics, Vol 157
+	// this is based on J. Meeus, Astronomical Algorithms, p. 135
 
 	// convert Julian Day to centuries since J2000.0
 	const t = toJulianCenturiesSinceJ2000(julianDay);
 
 	// terms for the obliquity evaluation
-	const terms =
+	//const terms =
+	//[
+	//	84381.448, // J2000 obliquity
+	//	-46.8150,
+	//	-0.00059,
+	//	0.001813
+	//];
+	const terms100 =
 	[
-		84381.448,
+		84381.448, // J2000 obliquity
 		-4680.93,
 		-1.55,
 		1999.25,
@@ -572,7 +578,8 @@ function calculateMeanObliquityOfEcliptic(julianDay)
 		2.45
 	];
 
-	const arcseconds = evaluateSeriesPolynomial(terms, t);
+	//const arcseconds = evaluateSeriesPolynomial(terms, t);
+	const arcseconds = evaluateSeriesPolynomial(terms100, t/100);
 	const degrees = arcseconds / 3600.0;
 	return degreesToRadians(degrees);
 }
@@ -757,14 +764,36 @@ function testGMST01Jan20190800()
 	const testValue = getGMSTSeconds(2458484.5 + (8 / 24));
 	return [ "GMST at 2019-1-1 08:00:00",
 		isWithinTolerance(testValue, 52965.379, 0.001)
-			? (passedHtml + ", accuracy = " + accuracy(testValue, 52965.379)*100 + "%")
+			? (passedHtml + ", test error = " + accuracy(testValue, 52965.379)*100 + "%")
 			: (failedHtml + ", expected 52965.37916293584, got " + testValue)];
+}
+
+function testMeanObliquity2458850()
+{
+	const testValue = radiansToDegrees(calculateMeanObliquityOfEcliptic(2458850));
+	const checkValue = 84372.086416 / 3600;
+	return [ "Mean Obliquity of the Ecliptic @ JD 2458850",
+		isWithinTolerance(testValue, checkValue, 0.001)
+			? (passedHtml + ", test error = " + accuracy(testValue, checkValue)*100 + "%")
+			: (failedHtml + ", expected " + checkValue + ", got " + testValue)];
+}
+
+function testMeanObliquity17214255()
+{
+	const testValue = radiansToDegrees(calculateMeanObliquityOfEcliptic(1721425.5));
+	const checkValue = 23.6947529287;
+	return [ "Mean Obliquity of the Ecliptic @ JD 1721425.5",
+		isWithinTolerance(testValue, checkValue, 0.001)
+			? (passedHtml + ", test error = " + accuracy(testValue, checkValue)*100 + "%")
+			: (failedHtml + ", expected " + checkValue + ", got " + testValue)];
 }
 
 const testFunctions =
 [
 	testJulianDay01Jan2019,
 	testGMST01Jan20190800,
+	testMeanObliquity2458850,
+	testMeanObliquity17214255,
 ];
 
 ///////////////////////////////////////////////////////////////////////////////
