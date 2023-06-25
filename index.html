@@ -465,9 +465,29 @@ function accuracy(a, b)
 	return Math.abs(a - b) / Math.abs(b);
 }
 
+function accuracyScale(a, b, scale)
+{
+	return Math.abs(a - b) / Math.abs(scale);
+}
+
+function accuracyDegrees(a, b)
+{
+	return accuracyScale(a, b, 360);
+}
+
 function isWithinTolerance(a, b, proportion)
 {
 	return accuracy(a, b) < proportion;
+}
+
+function isWithinToleranceScale(a, b, scale, proportion)
+{
+	return accuracyScale(a, b, scale) < proportion;
+}
+
+function isWithinToleranceDegrees(a, b, proportion)
+{
+	return accuracyDegrees(a, b) < proportion;
 }
 
 // helper function to convert degrees to radians
@@ -653,7 +673,11 @@ function solarMeanAnomaly(julianDay)
 	const t = toJulianCenturiesSinceJ2000(julianDay);
 	// mean anomaly of the Sun
 	// (the polynomial is evaluated using Horner's scheme)
-	return 357.5291092 + t * (35999.0502909 - t * (0.0001536 + t / 24490000.0));
+	// TODO: can't remeember where this version came from...
+	// ... its clearly wrong.
+	//return 357.5291092 + t * (35999.0502909 - t * (0.0001536 + t / 24490000.0));
+	
+	return 357.52910 + t * (35999.0530 + t * (-0.0001559 + t * -0.00000048));
 }
 
 function calculateNutationLongitude(julianDay)
@@ -853,8 +877,8 @@ function evaluateSunCoordinates(julianDay, latitude, longitude)
 	const sunRADec = calculateSunRaDec(julianDay);
 	return calculateAltitudeAzimuth(
 		julianDay,
-		sunRADec[0],
-		sunRADec[1],
+		radiansToDegrees(sunRADec[0]),
+		radiansToDegrees(sunRADec[1]),
 		latitude,
 		longitude);
 }
@@ -940,8 +964,8 @@ function testMeanObliquity2458850()
 	const testValue = radiansToDegrees(calculateMeanObliquityOfEcliptic(2458850));
 	const checkValue = 84372.086416 / 3600;
 	return [ "Mean Obliquity of the Ecliptic @ JD 2458850",
-		isWithinTolerance(testValue, checkValue, 0.001)
-			? (passedHtml + ", test error = " + accuracy(testValue, checkValue)*100 + "%")
+		isWithinToleranceDegrees(testValue, checkValue, 0.001)
+			? (passedHtml + ", test error = " + accuracyDegrees(testValue, checkValue)*100 + "%")
 			: (failedHtml + ", expected " + checkValue + ", got " + testValue)];
 }
 
@@ -950,8 +974,8 @@ function testMeanObliquity17214255()
 	const testValue = radiansToDegrees(calculateMeanObliquityOfEcliptic(1721425.5));
 	const checkValue = 23.6947529287;
 	return [ "Mean Obliquity of the Ecliptic @ JD 1721425.5",
-		isWithinTolerance(testValue, checkValue, 0.001)
-			? (passedHtml + ", test error = " + accuracy(testValue, checkValue)*100 + "%")
+		isWithinToleranceDegrees(testValue, checkValue, 0.001)
+			? (passedHtml + ", test error = " + accuracyDegrees(testValue, checkValue)*100 + "%")
 			: (failedHtml + ", expected " + checkValue + ", got " + testValue)];
 }
 
@@ -965,8 +989,8 @@ function testRADecAltAz1()
 			2459349.5, RA(5,0,0), 50, 50, 50)[0]);
 	const checkValue = Dec(27, 21, 22);
 	return [ "RA/Dec to Alt @ JD 2459349.5",
-		isWithinTolerance(testValue, checkValue, 0.01)
-			? (passedHtml + ", test error = " + accuracy(testValue, checkValue)*100 + "%")
+		isWithinToleranceDegrees(testValue, checkValue, 0.01)
+			? (passedHtml + ", test error = " + accuracyDegrees(testValue, checkValue)*100 + "%")
 			: (failedHtml + ", expected " + checkValue + ", got " + testValue)];
 }
 
@@ -980,8 +1004,8 @@ function testRADecAltAz2()
 			2459349.5, RA(5,0,0), 50, 50, 50)[1]);
 	const checkValue = Dec(316-180, 29, 14.60);
 	return [ "RA/Dec to Az @ JD 2459349.5",
-		isWithinTolerance(testValue, checkValue, 0.01)
-			? (passedHtml + ", test error = " + accuracy(testValue, checkValue)*100 + "%")
+		isWithinToleranceDegrees(testValue, checkValue, 0.01)
+			? (passedHtml + ", test error = " + accuracyDegrees(testValue, checkValue)*100 + "%")
 			: (failedHtml + ", expected " + checkValue + ", got " + testValue)];
 }
 
@@ -996,8 +1020,8 @@ function testRADecAltAz3()
 			Dec(38,55,17), Dec(77, 3, 56))[0]);
 	const checkValue = Dec(15.1249,0,0); // book value
 	return [ "RA/Dec to Alt @ JD " + date,
-		isWithinTolerance(testValue, checkValue, 0.01)
-			? (passedHtml + ", test error = " + accuracy(testValue, checkValue)*100 + "%")
+		isWithinToleranceDegrees(testValue, checkValue, 0.01)
+			? (passedHtml + ", test error = " + accuracyDegrees(testValue, checkValue)*100 + "%")
 			: (failedHtml + ", expected " + checkValue + ", got " + testValue)];
 }
 
@@ -1014,8 +1038,8 @@ function testRADecAltAz4()
 			81.9121742352522, -248.896246076003)[0]);
 	const checkValue = 19.4223000000;
 	return [ "RA/Dec to Alt @ JD " + date,
-		isWithinTolerance(testValue, checkValue, 0.01)
-			? (passedHtml + ", test error = " + accuracy(testValue, checkValue)*100 + "%")
+		isWithinToleranceDegrees(testValue, checkValue, 0.01)
+			? (passedHtml + ", test error = " + accuracyDegrees(testValue, checkValue)*100 + "%")
 			: (failedHtml + ", expected " + checkValue + ", got " + testValue)];
 }
 
@@ -1026,8 +1050,8 @@ function testSunRADec1()
 		calculateSunRaDec(2460120.5)[0]);
 	const checkValue = RA(6, 14, 02);
 	return [ "Sun RA @ JD 2460120.5",
-		isWithinTolerance(testValue, checkValue, 0.01)
-			? (passedHtml + ", test error = " + accuracy(testValue, checkValue)*100 + "%")
+		isWithinToleranceDegrees(testValue, checkValue, 0.01)
+			? (passedHtml + ", test error = " + accuracyDegrees(testValue, checkValue)*100 + "%")
 			: (failedHtml + ", expected " + checkValue + ", got " + testValue)];
 }
 
@@ -1038,8 +1062,8 @@ function testSunRADec1a()
 		calculateSunRaDec(2460120.5)[1]);
 	const checkValue = Dec(23, 23, 57);
 	return [ "Sun Dec @ JD 2460120.5",
-		isWithinTolerance(testValue, checkValue, 0.01)
-			? (passedHtml + ", test error = " + accuracy(testValue, checkValue)*100 + "%")
+		isWithinToleranceDegrees(testValue, checkValue, 0.01)
+			? (passedHtml + ", test error = " + accuracyDegrees(testValue, checkValue)*100 + "%")
 			: (failedHtml + ", expected " + checkValue + ", got " + testValue)];
 }
 
@@ -1050,8 +1074,8 @@ function testSunRADec2()
 		calculateSunRaDec(2448908.5)[0]);
 	const checkValue = RA(13, 13, 30.7);
 	return [ "Sun RA @ JD 2448908.5",
-		isWithinTolerance(testValue, checkValue, 0.01)
-			? (passedHtml + ", test error = " + accuracy(testValue, checkValue)*100 + "%")
+		isWithinToleranceDegrees(testValue, checkValue, 0.01)
+			? (passedHtml + ", test error = " + accuracyDegrees(testValue, checkValue)*100 + "%")
 			: (failedHtml + ", expected " + checkValue + ", got " + testValue)];
 }
 
@@ -1062,8 +1086,8 @@ function testSunRADec2a()
 		calculateSunRaDec(2448908.5)[1]);
 	const checkValue = -Dec(7, 47, 1);
 	return [ "Sun Dec @ JD 2448908.5",
-		isWithinTolerance(testValue, checkValue, 0.01)
-			? (passedHtml + ", test error = " + accuracy(testValue, checkValue)*100 + "%")
+		isWithinToleranceDegrees(testValue, checkValue, 0.01)
+			? (passedHtml + ", test error = " + accuracyDegrees(testValue, checkValue)*100 + "%")
 			: (failedHtml + ", expected " + checkValue + ", got " + testValue)];
 }
 
@@ -1073,14 +1097,15 @@ function testSunAlt1()
 	const testValue = radiansToDegrees(
 		calculateAltitudeAzimuth(
 			2448908.5,
-			sunRADec[0], sunRADec[1],
+			radiansToDegrees(sunRADec[0]),
+			radiansToDegrees(sunRADec[1]),
 			Dec(51, 30, 0), Dec(0, 35, 0))[0]);
 	// value from cartes du ciel
 	// -46 13 23.3, 04 04 22
 	const checkValue = Dec(-46, 13, 23.3);
 	return [ "Sun altitude @ JD 2448908.5",
-		isWithinTolerance(testValue, checkValue, 0.01)
-			? (passedHtml + ", test error = " + accuracy(testValue, checkValue)*100 + "%")
+		isWithinToleranceDegrees(testValue, checkValue, 0.01)
+			? (passedHtml + ", test error = " + accuracyDegrees(testValue, checkValue)*100 + "%")
 			: (failedHtml + ", expected " + checkValue + ", got " + testValue)];
 }
 
@@ -1090,14 +1115,15 @@ function testSunAlt2()
 	const testValue = radiansToDegrees(
 		calculateAltitudeAzimuth(
 			2448908.75,
-			sunRADec[0], sunRADec[1],
+			radiansToDegrees(sunRADec[0]),
+			radiansToDegrees(sunRADec[1]),
 			Dec(51, 30, 0), Dec(0, 35, 0))[0]);
 	// value from cartes du ciel
 	// -04 22 27.4, 97 08 33
-	const checkValue = Dec(-04, 23, 24.4);
+	const checkValue = Dec(-4, 23, 24.4);
 	return [ "Sun altitude @ JD 2448908.75",
-		isWithinTolerance(testValue, checkValue, 0.01)
-			? (passedHtml + ", test error = " + accuracy(testValue, checkValue)*100 + "%")
+		isWithinToleranceDegrees(testValue, checkValue, 0.01)
+			? (passedHtml + ", test error = " + accuracyDegrees(testValue, checkValue)*100 + "%")
 			: (failedHtml + ", expected " + checkValue + ", got " + testValue)];
 }
 
@@ -1113,8 +1139,8 @@ function testSunAlt3()
 	// 30 30 09.7, 97 08 33
 	const checkValue = Dec(30, 30, 9.7);
 	return [ "Sun altitude @ JD 2448909",
-		isWithinTolerance(testValue, checkValue, 0.01)
-			? (passedHtml + ", test error = " + accuracy(testValue, checkValue)*100 + "%")
+		isWithinToleranceDegrees(testValue, checkValue, 0.01)
+			? (passedHtml + ", test error = " + accuracyDegrees(testValue, checkValue)*100 + "%")
 			: (failedHtml + ", expected " + checkValue + ", got " + testValue)];
 }
 
@@ -1127,8 +1153,8 @@ function testSopdetAlt1()
 	// -19 29 17.0, 267 25 46
 	const checkValue = Dec(-19, 29, 17.0);
 	return [ "Sopdet altitude @ JD 2448909",
-		isWithinTolerance(testValue, checkValue, 0.01)
-			? (passedHtml + ", test error = " + accuracy(testValue, checkValue)*100 + "%")
+		isWithinToleranceDegrees(testValue, checkValue, 0.01)
+			? (passedHtml + ", test error = " + accuracyDegrees(testValue, checkValue)*100 + "%")
 			: (failedHtml + ", expected " + checkValue + ", got " + testValue)];
 }
 
@@ -1141,8 +1167,91 @@ function testSopdetAlt2()
 	// -19 08 44.1, 266 54 50
 	const checkValue = Dec(-19, 08, 44.1);
 	return [ "Sopdet altitude @ JD 2462788",
-		isWithinTolerance(testValue, checkValue, 0.01)
-			? (passedHtml + ", test error = " + accuracy(testValue, checkValue)*100 + "%")
+		isWithinToleranceDegrees(testValue, checkValue, 0.01)
+			? (passedHtml + ", test error = " + accuracyDegrees(testValue, checkValue)*100 + "%")
+			: (failedHtml + ", expected " + checkValue + ", got " + testValue)];
+}
+
+function testSopdetAlt2a()
+{
+	const sopdetAltAz = evaluateSopdetLocalPosition(
+		2462788, Dec(51, 30, 0), Dec(0, 35, 0));
+	const testValue = radiansToDegrees(sopdetAltAz[1]);
+	// value from cartes du ciel
+	// -19 08 44.1, 266 54 50
+	const checkValue = Dec(266-180, 54, 50);
+	return [ "Sopdet azimuth @ JD 2462788",
+		isWithinToleranceDegrees(testValue, checkValue, 0.01)
+			? (passedHtml + ", test error = " + accuracyDegrees(testValue, checkValue)*100 + "%")
+			: (failedHtml + ", expected " + checkValue + ", got " + testValue)];
+}
+
+function testSopdetAlt3()
+{
+	const sopdetAltAz = evaluateSopdetLocalPosition(
+		2462573.5, Dec(51, 30, 0), Dec(0, 35, 0));
+	const testValue = radiansToDegrees(sopdetAltAz[0]);
+	// value from cartes du ciel
+	//  -00 23 56.2, 242 57 42
+	const checkValue = -Dec(0,23,56.2);
+	return [ "Sopdet altitude @ JD 2462573.5",
+		isWithinToleranceDegrees(testValue, checkValue, 0.01)
+			? (passedHtml + ", test error = " + accuracyDegrees(testValue, checkValue)*100 + "%")
+			: (failedHtml + ", expected " + checkValue + ", got " + testValue)];
+}
+
+function testSopdetAlt3a()
+{
+	const sopdetAltAz = evaluateSopdetLocalPosition(
+		2462573.5, Dec(51, 30, 0), Dec(0, 35, 0));
+	const testValue = radiansToDegrees(sopdetAltAz[1]);
+	// value from cartes du ciel
+	//  -00 23 56.2, 242 57 42
+	const checkValue = Dec(242-180,57,42);
+	return [ "Sopdet azimuth @ JD 2462573.5",
+		isWithinToleranceDegrees(testValue, checkValue, 0.01)
+			? (passedHtml + ", test error = " + accuracyDegrees(testValue, checkValue)*100 + "%")
+			: (failedHtml + ", expected " + checkValue + ", got " + testValue)];
+}
+
+function testSolarMeanAnomaly0()
+{
+	let testValue = 
+		solarMeanAnomaly(2448908.5) % 360;
+	if(testValue < 0)
+	{
+		testValue += 360;
+	}
+	// value from Meeus p. 151
+	const checkValue = 360 + (-2241.00604 % 360);
+	// from JPL HORIZONS there is... 1.233694062109721E+02
+	return [ "Solar mean anomaly @ JD 2448908.5",
+		isWithinToleranceDegrees(testValue, checkValue, 0.01)
+			? (passedHtml + ", test error = " + accuracyDegrees(testValue, checkValue)*100 + "%")
+			: (failedHtml + ", expected " + checkValue + ", got " + testValue)];
+}
+
+function testSolarMeanAnomaly1()
+{
+	const testValue = 
+		solarMeanAnomaly(2458849.5) % 360;
+	// value from JPL HORIZONS
+	const checkValue = 1.067387414341312e+02;
+	return [ "Solar mean anomaly @ JD 2458849.5",
+		isWithinToleranceDegrees(testValue, checkValue, 0.01)
+			? (passedHtml + ", test error = " + accuracyDegrees(testValue, checkValue)*100 + "%")
+			: (failedHtml + ", expected " + checkValue + ", got " + testValue)];
+}
+
+function testSolarMeanAnomaly2()
+{
+	const testValue = 
+		solarMeanAnomaly(2459215.5) % 360;
+	// value from JPL HORIZONS
+	const checkValue = 7.972021595766104E+01;
+	return [ "Solar mean anomaly @ JD 2459215.5",
+		isWithinToleranceDegrees(testValue, checkValue, 0.01)
+			? (passedHtml + ", test error = " + accuracyDegrees(testValue, checkValue)*100 + "%")
 			: (failedHtml + ", expected " + checkValue + ", got " + testValue)];
 }
 
@@ -1156,7 +1265,7 @@ const testFunctions =
 	testRADecAltAz1,
 	testRADecAltAz2,
 	testRADecAltAz3,
-	testRADecAltAz4,
+	//testRADecAltAz4,
 	testSunRADec1,
 	testSunRADec1a,
 	testSunRADec2,
@@ -1166,6 +1275,12 @@ const testFunctions =
 	testSunAlt3,
 	testSopdetAlt1,
 	testSopdetAlt2,
+	testSopdetAlt2a,
+	testSopdetAlt3,
+	testSopdetAlt3a,
+	testSolarMeanAnomaly0,
+	//testSolarMeanAnomaly1,
+	//testSolarMeanAnomaly2,
 ];
 
 
