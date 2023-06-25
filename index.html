@@ -399,6 +399,11 @@ body
 // astronomical mathematics stuff
 ///////////////////////////////////////////////////////////////////////////////
 
+function clamp(x, min, max)
+{
+	return Math.min(Math.max(x, min), max);
+}
+
 function accuracy(a, b)
 {
 	return Math.abs(a - b) / Math.abs(b);
@@ -507,8 +512,6 @@ function gregorianToJulianDay(year, month, day)
 	return leapDaysAdjustment + day + daysFromYears + daysFromMonths - 1524.5;
 }
 
-// NOTE: most astronmical code works in degrees and other unhelpful units for
-// trigonometry, so many of these functions do the same
 function getGMSTSeconds(julianDay)
 {
 	// convert Julian Day to centuries since J2000.0
@@ -579,7 +582,7 @@ function calculateMeanObliquityOfEcliptic(julianDay)
 	];
 
 	//const arcseconds = evaluateSeriesPolynomial(terms, t);
-	const arcseconds = evaluateSeriesPolynomial(terms100, t/100);
+	const arcseconds = evaluateSeriesPolynomial(terms100, clamp(t/100, -1, 1));
 	const degrees = arcseconds / 3600.0;
 	return degreesToRadians(degrees);
 }
@@ -624,7 +627,7 @@ function calculateNutationLongitude(julianDay)
 function calculateAltitudeAzimuth(
 	julianDay, raJ2000, decJ2000, latitude, longitude)
 {
-	const obliquity = degreesToRadians(23.44);//calculateMeanObliquityOfEcliptic(julianDay);
+	const obliquity = calculateMeanObliquityOfEcliptic(julianDay);
 	const nutation = calculateNutationLongitude(julianDay);
 
 	// convert latitude and longitude to radians
@@ -646,28 +649,34 @@ function calculateAltitudeAzimuth(
 	// then degrees... then radians
 	gmst = degreesToRadians(15 * gmst);
 
-	// calculate the local sidereal time (LST)
-	const lst = gmst + lonRad;
-	const lstRad = lst < 0 ? (2 * Math.PI) + lst : lst;
-
 	// apply nutation and obliquity correction to right ascension and declination
 	const raRadCorrected = raRad + nutation;
-	const decRadCorrected = decRad + obliquity;
+	const decRadCorrected = decRad + obliquity
+		- degreesToRadians(84381.448/3600); // change since J2000.0
 
 	// calculate the hour angle
-	const hourAngle = lstRad - raRadCorrected;
-	const hourAngleRad = hourAngle < 0 ? (2 * Math.PI) + hourAngle : hourAngle;
+	const hourAngleRad = gmst - lonRad - raRadCorrected;
 
 	// calculate the sine and cosine of the latitude and declination
 	const sinLat = Math.sin(latRad);
 	const cosLat = Math.cos(latRad);
 	const sinDec = Math.sin(decRadCorrected);
 	const cosDec = Math.cos(decRadCorrected);
+	const tanDec = sinDec / cosDec;
+	// ... and the hour angle
+	const sinH = Math.sin(hourAngleRad);
+	const cosH = Math.cos(hourAngleRad);
 
 	// calculate the altitude and azimuth
-	const altitude = Math.asin(sinLat * sinDec + cosLat * cosDec * Math.cos(hourAngleRad));
-	const azimuth = Math.atan2(-cosDec * Math.sin(hourAngleRad), sinDec * cosLat - cosDec * sinLat * Math.cos(hourAngleRad));
-
+	const altitude = Math.asin(
+		sinLat * sinDec + cosLat * cosDec * cosH);
+	let azimuth = Math.atan2(
+		sinH,
+		cosH * sinLat - tanDec * cosLat);
+	if(azimuth < 0)
+	{
+		azimuth += 2 * Math.PI;
+	}
 	// SE - NOTE: we leave it in radians
 	// the parameters being in degrees are just a convenience
 	return [ altitude, azimuth ];
@@ -788,12 +797,58 @@ function testMeanObliquity17214255()
 			: (failedHtml + ", expected " + checkValue + ", got " + testValue)];
 }
 
+function testRADecAltAz1()
+{
+	const testValue = radiansToDegrees(
+		calculateAltitudeAzimuth(
+			2459349.5, RA(5,0,0), 50, 50, 50)[0]);
+	const checkValue = Dec(27, 21, 22);
+	return [ "RA/Dec to Alt/Az @ JD 2459349.5",
+		isWithinTolerance(testValue, checkValue, 0.001)
+			? (passedHtml + ", test error = " + accuracy(testValue, checkValue)*100 + "%")
+			: (failedHtml + ", expected " + checkValue + ", got " + testValue)];
+}
+
+function testRADecAltAz2()
+{
+	const testValue = radiansToDegrees(
+		calculateAltitudeAzimuth(
+			2459349.5, RA(5,0,0), 50, 50, 50)[1]);
+	const checkValue = Dec(316-180, 29, 14.60);
+	return [ "RA/Dec to Alt/Az @ JD 2459349.5",
+		isWithinTolerance(testValue, checkValue, 0.001)
+			? (passedHtml + ", test error = " + accuracy(testValue, checkValue)*100 + "%")
+			: (failedHtml + ", expected " + checkValue + ", got " + testValue)];
+}
+
+function testRADecAltAz3()
+{
+	// worked example from Meeus...
+	const date = gregorianToJulianDay(1987, 4, 10) + 19/24 + 21/(24*60);
+	const testValue = radiansToDegrees(
+		calculateAltitudeAzimuth(
+			gregorianToJulianDay(1987, 4, 10) + 19/24 + 21/(24*60),
+			RA(23,9,16.641), Dec(-6,43,11.61),
+			Dec(38,55,17), Dec(77, 3, 56))[0]);
+	const checkValue = //Dec(15.1249,0,0); // book value
+	// value from reference calculator at https://astrogreg.com/convert_ra_dec_to_alt_az.html
+	//+016° 06' 39.39"
+		Dec(16, 6, 39.39);
+	return [ "RA/Dec to Alt/Az @ JD " + date,
+		isWithinTolerance(testValue, checkValue, 0.001)
+			? (passedHtml + ", test error = " + accuracy(testValue, checkValue)*100 + "%")
+			: (failedHtml + ", expected " + checkValue + ", got " + testValue)];
+}
+
 const testFunctions =
 [
 	testJulianDay01Jan2019,
 	testGMST01Jan20190800,
 	testMeanObliquity2458850,
 	testMeanObliquity17214255,
+	testRADecAltAz1,
+	testRADecAltAz2,
+	testRADecAltAz3,
 ];
 
 ///////////////////////////////////////////////////////////////////////////////
