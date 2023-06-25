@@ -122,6 +122,7 @@ body
 
 .sidebar-day-segment-area li
 {
+	position: relative;
 	display: inline-flex;
 	background: #113377;
 	width: 90%;
@@ -134,13 +135,12 @@ body
 
 .sun-marker
 {
-	display: inline-flex;
-	width: 75%;
+	width: 90%;
 	align-content: center;
-	position: relative;
+	position: absolute;
 	/*float: left;*/
 	top: 0;
-	left: 45%;
+	left: 0;
 }
 
 .months
@@ -1607,20 +1607,27 @@ function clickDay(dayNumber)
 		// TODO: work out where the moon is for this time
 		
 		// TODO: work out where sopdet is for this time
+		const sopdetAltitude = evaluateSopdetLocalPosition(jdt, selectedLatitude, selectedLongitude)[0];
 		
 		// add a suitable bar.
 		let newHTML = container.innerHTML;
 		newHTML += '<li class="sidebar-day-sgement" style="background: rgb(11,'
 		
 		// TODO: drive this with sun altitude
-		const level = clamp(sunAltitude / (Math.PI * 0.5), 0, 1);//254 - Math.abs(240 - i * 20);
+		const level = clamp(sunAltitude / (Math.PI * 0.5), 0, 1);
+		const sopdetLevel = clamp(sopdetAltitude / (Math.PI * 0.5), 0, 1);
 		const colorLevel = clamp(3 * level, 0, 1);
 		// TODO: a better gradient, maybe some reds in it?
 		newHTML += Math.floor(100 * colorLevel) + ',';
 		newHTML += Math.floor(64 + 192 * colorLevel) + ')">';
+		if(sopdetLevel > 0.0)
+		{
+			const newSopdetStyle = "top: " + (60 -sopdetLevel * 60) + "px;";
+			newHTML += '<img class="sun-marker" src="' + imageDataN14 + '" style="' + newSopdetStyle + '">';
+		}
 		if(level > 0.0)
 		{
-			const newStyle = "top: " + (-level * 60) + "px;";
+			const newStyle = "top: " + (60 -level * 60) + "px;";
 			newHTML += '<img class="sun-marker" src="' + imageDataN5 + '" style="' + newStyle + '">';
 		}
 		newHTML += i.toString() + 'h';
