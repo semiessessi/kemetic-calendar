@@ -1757,21 +1757,18 @@ function clickDay(dayNumber)
 		const jdt = startJD + timeOfDay;
 		timeOfDay += hourTime;
 		
-		// TODO: work out where the sun is for this time
 		const sunAltitude = evaluateSunCoordinates(jdt, selectedLatitude, selectedLongitude)[0];
 		// TODO: work out where the moon is for this time
-		
-		// TODO: work out where sopdet is for this time
 		const sopdetAltitude = evaluateSopdetLocalPosition(jdt, selectedLatitude, selectedLongitude)[0];
 		
 		// add a suitable bar.
 		let newHTML = container.innerHTML;
 		newHTML += '<li class="sidebar-day-sgement" style="background: rgb(11,'
 		
-		// TODO: drive this with sun altitude
-		const level = clamp(sunAltitude / (Math.PI * 0.5), 0, 1);
+		const rawLevel = sunAltitude / (Math.PI * 0.5);
+		const level = clamp(rawLevel, 0, 1);
 		const sopdetLevel = clamp(sopdetAltitude / (Math.PI * 0.5), 0, 1);
-		const colorLevel = clamp(3 * level, 0, 1);
+		const colorLevel = clamp(3 * rawLevel + 0.5, 0, 1);
 		// TODO: a better gradient, maybe some reds in it?
 		newHTML += Math.floor(100 * colorLevel) + ',';
 		newHTML += Math.floor(64 + 192 * colorLevel) + ')">';
