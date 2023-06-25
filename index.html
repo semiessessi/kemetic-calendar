@@ -421,6 +421,9 @@ body
 	<input class="custom-latitude" name="custom-latitude" id="custom-latitude" type="text">
 	<label for="custom-longitude"Longitude:</label>
 	<input class="custom-longitude" name="custom-longitude" id="custom-longitude" type="text">
+	<label for="timezone-choice"Timezone:</label>
+	<select class="timezone-choice" name="timezone-choice" id="timezone-choice" onchange="applyTimezoneSelection()">
+	</select>
 	<button type="button" onclick='applyLocation();'>Apply</button>
 	<button type="button" onclick='geolocate();'>Use Current Location</button>
 	<div class="sopdet-visible-warning" id="sopdet-visible-warning">
@@ -936,6 +939,35 @@ const locations =
 	[-22.9519, 43.2105, -3, -3],	// Christ the Redeemer
 ];
 
+const timezones =
+[
+	["UTC-12", -12],
+	["UTC-11", -11],
+	["UTC-10", -10],
+	["UTC-9", -9],
+	["UTC-8", -8],
+	["UTC-7", -7],
+	["UTC-6", -6],
+	["UTC-5", -5],
+	["UTC-4", -4],
+	["UTC-3", -3],
+	["UTC-2", -2],
+	["UTC-1", -1],
+	["UTC", 0],
+	["UTC+1", 1],
+	["UTC+2", 2],
+	["UTC+3", 3],
+	["UTC+4", 4],
+	["UTC+5", 5],
+	["UTC+5.5", 5.5],
+	["UTC+6", 6],
+	["UTC+7", 7],
+	["UTC+8", 8],
+	["UTC+9", 9],
+	["UTC+10", 10],
+	["UTC+11", 11],
+];
+
 function calculateNextSunrise(julianDay, latitude, longitude)
 {
 	// try to find a point where the sun is below the horizon to start...
@@ -1382,6 +1414,8 @@ if(urlParams.has('selected-day'))
 let selectedLocation = 1;
 let selectedLatitude = locations[0][0];
 let selectedLongitude = locations[0][1];
+// TODO: daylight savings etc.
+let selectedTimezone = locations[0][2];
 if(urlParams.has('selected-location'))
 {
 	selectedLocation = parseInt(urlParams.get('selected-location'));
@@ -1389,7 +1423,13 @@ if(urlParams.has('selected-location'))
 	{
 		selectedLatitude = locations[selectedLocation - 1][0];
 		selectedLongitude = locations[selectedLocation - 1][1];
+		selectedTimezone = locations[selectedLocation - 1][2];
 	}
+}
+
+if(urlParams.has('selected-timezone'))
+{
+	selectedTimezone = parseFloat(urlParams.get('selected-timezone'));
 }
 
 if(selectedLocation == 0)
@@ -1405,7 +1445,14 @@ if(selectedLocation == 0)
 }
 
 // set the values
+for(const timezone of timezones)
+{
+	document.getElementById('timezone-choice').innerHTML +=
+		'<option value="' + timezone[1] + '">' + timezone[0] + '</option>';
+}
+
 document.getElementById('location-choice').value = selectedLocation;
+document.getElementById('timezone-choice').value = selectedTimezone;
 document.getElementById('custom-latitude').value = selectedLatitude;
 document.getElementById('custom-longitude').value = selectedLongitude;
 document.getElementById('sopdet-visible-warning').style.display =
@@ -1471,7 +1518,6 @@ const monthNamesNew =
 	"Mesuwt Ra",
 	"Heryu Ronpet"
 ];
-
 
 const monthNamesGreek =
 [
@@ -1664,6 +1710,14 @@ function updateMonthStyle()
 function applyLocationSelection()
 {
 	selectedLocation = document.getElementById('location-choice').value;
+	selectedTimezone = locations[selectedLocation - 1][2];
+	document.getElementById('timezone-choice').value = selectedTimezone;
+	applyChanges();
+}
+
+function applyTimezoneSelection()
+{
+	selectedTimezone = document.getElementById('timezone-choice').value;
 	applyChanges();
 }
 
@@ -1726,6 +1780,11 @@ function applyChanges()
 	{
 		newLocation += "&selected-location=" + selectedLocation;
 	}
+	
+	if(selectedTimezone != 0)
+	{
+		newLocation += "&selected-timezone=" + selectedTimezone;
+	}
 
 	window.location = newLocation.replace('&', '?');
 }
@@ -1762,8 +1821,6 @@ function clickDay(dayNumber)
 		+ " / JD " + gregorianToJulianDay(gregorianYear, gregorianMonth, gregorianDay) + "</div>";
 	
 	descriptionHTML += '<hr>';
-	// this doesn't work yet, so warn people (!)
-	descriptionHTML += '<span class="sopdet-visible-warning">WORK IN PROGRESS - NOT ACCURATE</span>';
 	descriptionHTML += '<ul class="sidebar-day-segment-area"></ul><hr>';
 	
 	if(festivalDataUCL.has(dayNumber))
@@ -1794,7 +1851,7 @@ function clickDay(dayNumber)
 	let container = sidebar.getElementsByClassName("sidebar-day-segment-area")[0];
 	
 	// add the bars.
-	let timeOfDay = 1.0 / 48.0;
+	let timeOfDay = -selectedTimezone / 24.0;//1.0 / 48.0;
 	const hourTime = 1.0 / 24.0;
 	let startDate = new Date(wepRonpetDate);
 	startDate.setDate(debugsGregorianDate.getDate() + (selectedDay - 1));
