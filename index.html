@@ -673,11 +673,10 @@ function solarMeanAnomaly(julianDay)
 	const t = toJulianCenturiesSinceJ2000(julianDay);
 	// mean anomaly of the Sun
 	// (the polynomial is evaluated using Horner's scheme)
-	// TODO: can't remeember where this version came from...
-	// ... its clearly wrong.
-	//return 357.5291092 + t * (35999.0502909 - t * (0.0001536 + t / 24490000.0));
-	
-	return 357.52910 + t * (35999.0530 + t * (-0.0001559 + t * -0.00000048));
+	// Meeus p. 308
+	return 357.5291092 + t * (35999.0502909 + t * (-0.0001536 + t / 24490000.0));
+	// from Meeus also but lower precision...?
+	//return 357.52910 + t * (35999.0530 + t * (-0.0001559 + t * -0.00000048));
 }
 
 function calculateNutationLongitude(julianDay)
@@ -1133,7 +1132,8 @@ function testSunAlt3()
 	const testValue = radiansToDegrees(
 		calculateAltitudeAzimuth(
 			2448909,
-			sunRADec[0], sunRADec[1],
+			radiansToDegrees(sunRADec[0]),
+			radiansToDegrees(sunRADec[1]),
 			Dec(51, 30, 0), Dec(0, 35, 0))[0]);
 	// value from cartes du ciel
 	// 30 30 09.7, 97 08 33
