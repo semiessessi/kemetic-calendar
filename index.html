@@ -267,7 +267,7 @@ body
 {
 	body
 	{
-		font-size: 1.75vw;
+		font-size: 1.5vw;
 	}
 
 	.title
@@ -421,11 +421,12 @@ body
 	<input class="custom-latitude" name="custom-latitude" id="custom-latitude" type="text">
 	<label for="custom-longitude"Longitude:</label>
 	<input class="custom-longitude" name="custom-longitude" id="custom-longitude" type="text">
-	<label for="timezone-choice"Timezone:</label>
-	<select class="timezone-choice" name="timezone-choice" id="timezone-choice" onchange="applyTimezoneSelection()">
-	</select>
 	<button type="button" onclick='applyLocation();'>Apply</button>
 	<button type="button" onclick='geolocate();'>Use Current Location</button>
+	<br>
+	<label for="timezone-choice">Timezone:</label>
+	<select class="timezone-choice" name="timezone-choice" id="timezone-choice" onchange="applyTimezoneSelection()">
+	</select>
 	<div class="sopdet-visible-warning" id="sopdet-visible-warning">
 	WARNING: Sopdet never rises at this latitude!
 	</div>
