@@ -850,7 +850,7 @@ function calculateSunRaDec(julianDay)
 // calculate position of Sun in the for a given time and place
 function evaluateSunCoordinates(julianDay, latitude, longitude)
 {
-	let sunRADec = calculateSunRaDec(julianDay);
+	const sunRADec = calculateSunRaDec(julianDay);
 	return calculateAltitudeAzimuth(
 		julianDay,
 		sunRADec[0],
@@ -1067,7 +1067,7 @@ function testSunRADec2a()
 			: (failedHtml + ", expected " + checkValue + ", got " + testValue)];
 }
 
-function testSunAlt()
+function testSunAlt1()
 {
 	const sunRADec = calculateSunRaDec(2448908.5);
 	const testValue = radiansToDegrees(
@@ -1118,6 +1118,34 @@ function testSunAlt3()
 			: (failedHtml + ", expected " + checkValue + ", got " + testValue)];
 }
 
+function testSopdetAlt1()
+{
+	const sopdetAltAz = evaluateSopdetLocalPosition(
+		2448909, Dec(51, 30, 0), Dec(0, 35, 0));
+	const testValue = radiansToDegrees(sopdetAltAz[0]);
+	// value from cartes du ciel
+	// -19 29 17.0, 267 25 46
+	const checkValue = Dec(-19, 29, 17.0);
+	return [ "Sopdet altitude @ JD 2448909",
+		isWithinTolerance(testValue, checkValue, 0.01)
+			? (passedHtml + ", test error = " + accuracy(testValue, checkValue)*100 + "%")
+			: (failedHtml + ", expected " + checkValue + ", got " + testValue)];
+}
+
+function testSopdetAlt2()
+{
+	const sopdetAltAz = evaluateSopdetLocalPosition(
+		2462788, Dec(51, 30, 0), Dec(0, 35, 0));
+	const testValue = radiansToDegrees(sopdetAltAz[0]);
+	// value from cartes du ciel
+	// -19 08 44.1, 266 54 50
+	const checkValue = Dec(-19, 08, 44.1);
+	return [ "Sopdet altitude @ JD 2462788",
+		isWithinTolerance(testValue, checkValue, 0.01)
+			? (passedHtml + ", test error = " + accuracy(testValue, checkValue)*100 + "%")
+			: (failedHtml + ", expected " + checkValue + ", got " + testValue)];
+}
+
 const testFunctions =
 [
 	testJulianDay01Jan2019,
@@ -1133,9 +1161,11 @@ const testFunctions =
 	testSunRADec1a,
 	testSunRADec2,
 	testSunRADec2a,
-	testSunAlt,
+	testSunAlt1,
 	testSunAlt2,
 	testSunAlt3,
+	testSopdetAlt1,
+	testSopdetAlt2,
 ];
 
 
