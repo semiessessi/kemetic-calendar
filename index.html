@@ -625,11 +625,12 @@ function calculateNutationLongitude(julianDay)
 
 function RADecToCurrentEpoch(julianDay, raJ2000, decJ2000)
 {
-	// note these are only valid for J2000.0
+	// TODO: https://ui.adsabs.harvard.edu/abs/2011A%26A...534A..22V/abstract
+	// this is from Meeus p 126
 	// convert Julian Day to centuries since J2000.0
-	// from Meeus p 126
 	const t = toJulianCenturiesSinceJ2000(julianDay);
 	
+	// note these are only valid for J2000.0, the coefficients vary for different epochs
 	const zeta = degreesToRadians(
 		t * (2306.2181 + t * (0.30188 + t * 0.017998)) / 3600);
 	const z = degreesToRadians(
@@ -737,7 +738,52 @@ function evaluateSopdetLocalPosition(julianDay, latitude, longitude)
 
 function calculateSunRaDec(julianDay)
 {
-	return [0, 0];
+	// this follows the process on Meeus p.152
+	// convert Julian Day to centuries since J2000.0
+	const t = toJulianCenturiesSinceJ2000(julianDay);
+
+	// mean longitude of the Sun
+	const L = 280.46646 + t * (36000.76983 + t * 0.0003032);
+
+	// mean anomaly of the Sun
+	const M = solarMeanAnomaly(julianDay);
+
+	// eccentricity of the Earth's orbit
+	//const e = 0.016708634 + t * (-0.000042037 - t * 0.0000001267);
+
+	//const Lrad = degreesToRadians(L);
+	const Mrad = degreesToRadians(M);
+
+	// equation of center
+	const C = ((1.914602 + t * (-0.004817 + t * -0.000014)) * Math.sin(Mrad)) +
+			((0.019993 - 0.000101 * t) * Math.sin(2 * Mrad)) +
+			(0.000289 * Math.sin(3 * Mrad));
+
+	// true longitude of the Sun
+	const trueLongitude = L + C;
+
+	// apparent longitude of the Sun, correcting for nutation and abberation
+	const omega = 125.04 - 1934.136 * t;
+	const omegaRad = degreesToRadians(omega);
+	const lambda = trueLongitude - 0.00569 - 0.00478 * Math.sin(omegaRad);
+
+	// (mean) obliquity of the ecliptic, with correction...
+	const epsilonRad = calculateMeanObliquityOfEcliptic(julianDay)
+		+ degreesToRadians(0.00256) * Math.cos(omegaRad);
+
+	// calculate the Sun's right ascension (RA)
+	const lambdaRad = degreesToRadians(lambda);
+	let RA = Math.atan2(
+		Math.cos(epsilonRad) * Math.sin(lambdaRad),
+		Math.cos(lambdaRad));
+	if(RA < 0)
+	{
+		RA += Math.PI * 2;
+	}
+	// calculate the Sun's declination (Dec)
+	const dec = Math.asin(Math.sin(epsilonRad) * Math.sin(lambdaRad));
+
+	return [ RA, dec ];
 }
 
 // calculate position of Sun in the for a given time and place
@@ -777,7 +823,6 @@ function calculateNextSunrise(julianDay, latitude, longitude)
 		if((riseHour < 0) && (hoursSunAltAz[i][0] > 0.0) && (lastSunAlt < 0.0))
 		{
 			riseHour = i;
-			break;
 		}
 		lastSunAlt = hoursSunAltAz[i][0];
 	}
@@ -874,6 +919,71 @@ function testRADecAltAz3()
 			: (failedHtml + ", expected " + checkValue + ", got " + testValue)];
 }
 
+function testSunRADec1()
+{
+	// from https://www.hko.gov.hk/en/gts/astronomy/sun_ra_dec.htm
+	const testValue = radiansToDegrees(
+		calculateSunRaDec(2460120.5)[0]);
+	const checkValue = RA(6, 14, 02);
+	return [ "Sun RA @ JD 2460120.5",
+		isWithinTolerance(testValue, checkValue, 0.01)
+			? (passedHtml + ", test error = " + accuracy(testValue, checkValue)*100 + "%")
+			: (failedHtml + ", expected " + checkValue + ", got " + testValue)];
+}
+
+function testSunRADec1a()
+{
+	// from https://www.hko.gov.hk/en/gts/astronomy/sun_ra_dec.htm
+	const testValue = radiansToDegrees(
+		calculateSunRaDec(2460120.5)[1]);
+	const checkValue = Dec(23, 23, 57);
+	return [ "Sun Dec @ JD 2460120.5",
+		isWithinTolerance(testValue, checkValue, 0.01)
+			? (passedHtml + ", test error = " + accuracy(testValue, checkValue)*100 + "%")
+			: (failedHtml + ", expected " + checkValue + ", got " + testValue)];
+}
+
+function testSunRADec2()
+{
+	// from Meeus p.153
+	const testValue = radiansToDegrees(
+		calculateSunRaDec(2448908.5)[0]);
+	const checkValue = RA(13, 13, 30.7);
+	return [ "Sun RA @ JD 2448908.5",
+		isWithinTolerance(testValue, checkValue, 0.01)
+			? (passedHtml + ", test error = " + accuracy(testValue, checkValue)*100 + "%")
+			: (failedHtml + ", expected " + checkValue + ", got " + testValue)];
+}
+
+function testSunRADec2a()
+{
+	// from Meeus p.153
+	const testValue = radiansToDegrees(
+		calculateSunRaDec(2448908.5)[1]);
+	const checkValue = -Dec(7, 47, 1);
+	return [ "Sun Dec @ JD 2448908.5",
+		isWithinTolerance(testValue, checkValue, 0.01)
+			? (passedHtml + ", test error = " + accuracy(testValue, checkValue)*100 + "%")
+			: (failedHtml + ", expected " + checkValue + ", got " + testValue)];
+}
+
+function testSunAlt()
+{
+	const sunRADec = calculateSunRaDec(2448908.5);
+	const testValue = radiansToDegrees(
+		calculateAltitudeAzimuth(
+			2448908.5,
+			sunRADec[0], sunRADec[1],
+			Dec(51, 30, 0), Dec(0, 35, 0))[0]);
+	// value from cartes du ciel
+	// -46 13 23.3 / 04 04 22
+	const checkValue = Dec(-46, 13, 23.3);
+	return [ "Sun altitude @ JD 2448908.5",
+		isWithinTolerance(testValue, checkValue, 0.01)
+			? (passedHtml + ", test error = " + accuracy(testValue, checkValue)*100 + "%")
+			: (failedHtml + ", expected " + checkValue + ", got " + testValue)];
+}
+
 const testFunctions =
 [
 	testJulianDay01Jan2019,
@@ -883,6 +993,11 @@ const testFunctions =
 	testRADecAltAz1,
 	testRADecAltAz2,
 	//testRADecAltAz3,
+	testSunRADec1,
+	testSunRADec1a,
+	testSunRADec2,
+	testSunRADec2a,
+	testSunAlt,
 ];
 
 ///////////////////////////////////////////////////////////////////////////////
