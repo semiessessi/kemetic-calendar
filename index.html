@@ -1437,11 +1437,11 @@ if(selectedLocation == 0)
 {
 	if(urlParams.has('latitude'))
 	{
-		selectedLatitude = parseInt(urlParams.get('latitude'));
+		selectedLatitude = parseFloat(urlParams.get('latitude'));
 	}
 	if(urlParams.has('longitude'))
 	{
-		selectedLongitude = parseInt(urlParams.get('longitude'));
+		selectedLongitude = parseFloat(urlParams.get('longitude'));
 	}
 }
 
@@ -1775,7 +1775,7 @@ function applyChanges()
 	if(selectedLocation == 0)
 	{
 		newLocation += "&selected-location=0&latitude="
-			+ selectedLatitude + "&latitude=" + selectedLongitude;
+			+ selectedLatitude + "&longitude=" + selectedLongitude;
 	}
 	else if(selectedLocation != 1)
 	{
