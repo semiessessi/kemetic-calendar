@@ -412,6 +412,10 @@ body
 		<option value="0">Custom</option>
 		<option value="1">London, UK - Greenwich Observatory</option>
 		<option value="2">Giza, Egypt - Great Pyramid</option>
+		<option value="3">New York, USA - Statue of Liberty</option>
+		<option value="4">Agra, India - Taj Mahal</option>
+		<option value="5">Sydney, Australia - Sydney Opera House</option>
+		<option value="6">Rio de Janeiro, Brazil - Christ the Redeemer</option>
 	</select>
 	<label for="custom-latitude"Latitude:</label>
 	<input class="custom-latitude" name="custom-latitude" id="custom-latitude" type="text">
@@ -679,6 +683,44 @@ function solarMeanAnomaly(julianDay)
 	//return 357.52910 + t * (35999.0530 + t * (-0.0001559 + t * -0.00000048));
 }
 
+function lunarMeanAnomaly(julianDay)
+{
+	const t = toJulianCenturiesSinceJ2000(julianDay);
+	// mean anomaly of the Moon
+	// (the polynomial is evaluated using Horner's scheme)
+	// Meeus p. 308
+	return 134.9634114 + t * (477198.8676313 + t * (0.0089970 + t *(1.0 / 69699.0 - t / 1471200)));
+}
+
+function lunarMeanLongitude(julianDay)
+{
+	const t = toJulianCenturiesSinceJ2000(julianDay);
+	// mean longitude of the Moon
+	// (the polynomial is evaluated using Horner's scheme)
+	// Meeus p. 308
+	return 218.3164591 + t * (481267.88134236 + t * (-0.0013268 + t * (1.0 / 538841.0 - t / 6519400.0)));
+}
+
+function lunarMeanElongation(julianDay)
+{
+	const t = toJulianCenturiesSinceJ2000(julianDay);
+	// mean elongation of the Moon
+	// (the polynomial is evaluated using Horner's scheme)
+	// Meeus p. 308
+	return 297.8502042 + t * (445267.1115168 + t * (-0.00163 + t * (1.0 / 545868.0 - t / 113065000)));
+}
+
+function lunarArgumentOfLatitude(julianDay)
+{
+	const t = toJulianCenturiesSinceJ2000(julianDay);
+	// mean elongation of the Moon
+	// (the polynomial is evaluated using Horner's scheme)
+	// Meeus p. 308
+	return 93.2720993 + t * (483202.0175273 + t * (-0.0034029 + t * (-1.0 / 3526000.0 + t / 863310000.0)));
+}
+
+// TODO: this needs checking. the comments do not match the maths
+// on that elongation....
 function calculateNutationLongitude(julianDay)
 {
 	// convert Julian Day to centuries since J2000.0
@@ -692,10 +734,10 @@ function calculateNutationLongitude(julianDay)
 	const m = solarMeanAnomaly(julianDay);
 
 	// mean anomaly of the Moon
-	const ms = 134.9634114 + t * (477198.8676313 + t * (0.008997 + t * (1.0 / 69699.0 - t / 14712000.0)));
+	const ms = lunarMeanAnomaly(julianDay);
 
 	// moon's argument of latitude
-	const f = 93.2720993 + t * (483202.0175273 - t * (0.0034029 - t * (1.0 / 3526000.0 + t / 863310000.0)));
+	const f = lunarArgumentOfLatitude(julianDay);
 
 	// longitude of the ascending node of the Moon's mean orbit on the ecliptic
 	const omega = 125.044555 - t * (1934.1361849 + t * (0.0020762 + t * (1.0 / 467410.0 - t / 18720000.0)));
@@ -883,10 +925,15 @@ function evaluateSunCoordinates(julianDay, latitude, longitude)
 }
 
 const sopdetMaxVisibleLatitude = 90 + Dec(-16, 42, 58.0171);
+// these have timezones tacked on.
 const locations =
 [
-	[51.4769, -0.0005], // Greenwich Observatory
-	[29.9792, 31.1342], // Great Pyramid of Giza
+	[51.4769, -0.0005, 0, 1],		// Greenwich Observatory
+	[29.9792, -31.1342, 2, 3],		// Great Pyramid of Giza
+	[40.6892, 74.0445, -5, -4],		// Statue of Liberty
+	[27.1751, -78.0421, 5.5, 5.5],	// Taj Mahal
+	[-33.8568, -151.2153, 10, 9],	// Sydney Opera House
+	[-22.9519, 43.2105, -3, -3],	// Christ the Redeemer
 ];
 
 function calculateNextSunrise(julianDay, latitude, longitude)
