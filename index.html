@@ -102,6 +102,47 @@ body
 	font-style: italic;
 }
 
+.sidebar-day-segment-area
+{
+	background: #ffffff;
+	grid-template-columns: repeat(24, minmax(0,1fr));
+	display: grid;
+	padding: 0;
+	margin: 0;
+	align-items: center;
+	justify-content: center;
+	justify-items: center;
+	text-align: center;
+	gap: 0;
+	width: 100%;
+	height: 100px;
+	font-size: 60%;
+	color: #fff;
+}
+
+.sidebar-day-segment-area li
+{
+	display: inline-flex;
+	background: #113377;
+	width: 90%;
+	height: 100%;
+	vertical-align: baseline;
+	align-items: flex-end;
+	align-content: center;
+	justify-content: center;
+}
+
+.sun-marker
+{
+	display: inline-flex;
+	width: 75%;
+	align-content: center;
+	position: relative;
+	float: none;
+	top: 0;
+	left: 45%;
+}
+
 .months
 {
 	background: #3adcbc;
@@ -242,6 +283,11 @@ body
 	.intercalary li
 	{
 		width: 30%;
+	}
+	
+	.sidebar-day-segment-area
+	{
+		font-size: 40%;
 	}
 }
 
@@ -887,7 +933,7 @@ function testRADecAltAz1()
 		calculateAltitudeAzimuth(
 			2459349.5, RA(5,0,0), 50, 50, 50)[0]);
 	const checkValue = Dec(27, 21, 22);
-	return [ "RA/Dec to Alt/Az @ JD 2459349.5",
+	return [ "RA/Dec to Alt @ JD 2459349.5",
 		isWithinTolerance(testValue, checkValue, 0.01)
 			? (passedHtml + ", test error = " + accuracy(testValue, checkValue)*100 + "%")
 			: (failedHtml + ", expected " + checkValue + ", got " + testValue)];
@@ -899,7 +945,7 @@ function testRADecAltAz2()
 		calculateAltitudeAzimuth(
 			2459349.5, RA(5,0,0), 50, 50, 50)[1]);
 	const checkValue = Dec(316-180, 29, 14.60);
-	return [ "RA/Dec to Alt/Az @ JD 2459349.5",
+	return [ "RA/Dec to Az @ JD 2459349.5",
 		isWithinTolerance(testValue, checkValue, 0.01)
 			? (passedHtml + ", test error = " + accuracy(testValue, checkValue)*100 + "%")
 			: (failedHtml + ", expected " + checkValue + ", got " + testValue)];
@@ -911,14 +957,29 @@ function testRADecAltAz3()
 	const date = gregorianToJulianDay(1987, 4, 10) + 19/24 + 21/(24*60);
 	const testValue = radiansToDegrees(
 		calculateAltitudeAzimuth(
-			gregorianToJulianDay(1987, 4, 10) + 19/24 + 21/(24*60),
+			date,
 			RA(23,9,16.641), Dec(-6,43,11.61),
 			Dec(38,55,17), Dec(77, 3, 56))[0]);
 	const checkValue = Dec(15.1249,0,0); // book value
-	// value from reference calculator at https://astrogreg.com/convert_ra_dec_to_alt_az.html
-	//+016° 06' 39.39"
-		//Dec(16, 6, 39.39);
-	return [ "RA/Dec to Alt/Az @ JD " + date,
+	return [ "RA/Dec to Alt @ JD " + date,
+		isWithinTolerance(testValue, checkValue, 0.01)
+			? (passedHtml + ", test error = " + accuracy(testValue, checkValue)*100 + "%")
+			: (failedHtml + ", expected " + checkValue + ", got " + testValue)];
+}
+
+function testRADecAltAz4()
+{
+	// worked example from https://astrogreg.com/radec_to_altaz_testtdata.html...
+	//1955-Aug-26 17:03:14
+	const date = gregorianToJulianDay(1955, 8, 26) + 17/24 + 3/(24*60)+ 14/(24*3600);
+	// LST = 7.92504, HA = -2.21260
+	const testValue = radiansToDegrees(
+		calculateAltitudeAzimuth(
+			date,
+			12.7006088, 152.0646154,
+			81.9121742352522, 248.896246076003)[0]);
+	const checkValue = 19.4223000000;
+	return [ "RA/Dec to Alt @ JD " + date,
 		isWithinTolerance(testValue, checkValue, 0.01)
 			? (passedHtml + ", test error = " + accuracy(testValue, checkValue)*100 + "%")
 			: (failedHtml + ", expected " + checkValue + ", got " + testValue)];
@@ -981,9 +1042,43 @@ function testSunAlt()
 			sunRADec[0], sunRADec[1],
 			Dec(51, 30, 0), Dec(0, 35, 0))[0]);
 	// value from cartes du ciel
-	// -46 13 23.3 / 04 04 22
+	// -46 13 23.3, 04 04 22
 	const checkValue = Dec(-46, 13, 23.3);
 	return [ "Sun altitude @ JD 2448908.5",
+		isWithinTolerance(testValue, checkValue, 0.01)
+			? (passedHtml + ", test error = " + accuracy(testValue, checkValue)*100 + "%")
+			: (failedHtml + ", expected " + checkValue + ", got " + testValue)];
+}
+
+function testSunAlt2()
+{
+	const sunRADec = calculateSunRaDec(2448908.75);
+	const testValue = radiansToDegrees(
+		calculateAltitudeAzimuth(
+			2448908.75,
+			sunRADec[0], sunRADec[1],
+			Dec(51, 30, 0), Dec(0, 35, 0))[0]);
+	// value from cartes du ciel
+	// -04 22 27.4, 97 08 33
+	const checkValue = Dec(-04, 23, 24.4);
+	return [ "Sun altitude @ JD 2448908.75",
+		isWithinTolerance(testValue, checkValue, 0.01)
+			? (passedHtml + ", test error = " + accuracy(testValue, checkValue)*100 + "%")
+			: (failedHtml + ", expected " + checkValue + ", got " + testValue)];
+}
+
+function testSunAlt3()
+{
+	const sunRADec = calculateSunRaDec(2448909);
+	const testValue = radiansToDegrees(
+		calculateAltitudeAzimuth(
+			2448909,
+			sunRADec[0], sunRADec[1],
+			Dec(51, 30, 0), Dec(0, 35, 0))[0]);
+	// value from cartes du ciel
+	// 30 30 09.7, 97 08 33
+	const checkValue = Dec(30, 30, 9.7);
+	return [ "Sun altitude @ JD 2448909",
 		isWithinTolerance(testValue, checkValue, 0.01)
 			? (passedHtml + ", test error = " + accuracy(testValue, checkValue)*100 + "%")
 			: (failedHtml + ", expected " + checkValue + ", got " + testValue)];
@@ -997,13 +1092,27 @@ const testFunctions =
 	testMeanObliquity17214255,
 	testRADecAltAz1,
 	testRADecAltAz2,
-	//testRADecAltAz3,
+	testRADecAltAz3,
+	testRADecAltAz4,
 	testSunRADec1,
 	testSunRADec1a,
 	testSunRADec2,
 	testSunRADec2a,
 	testSunAlt,
+	testSunAlt2,
+	testSunAlt3,
 ];
+
+
+///////////////////////////////////////////////////////////////////////////////
+// base 64 image data
+///////////////////////////////////////////////////////////////////////////////
+
+const imageDataN5 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAYAAACM/rhtAAAD5klEQVRYw82Za0iTURjHd3HL2kqbTVpqecmSCjWtpaNSU8vKTWxBRRfoglhWkBZBQVDoCMKo9qUvERXewi9BECRaLqysKKKr6wZFF9IZhUVhPm/PM89r25zl9u524M/Yu73n/Hbec57nf56JRN618ahVqFOo66guuUzyQRUh6yGNkUs+4jUrqh1lRhnZPX5vOlSDWCz6ocuIAlPlHLDU54Dtrh44q5FzVO89A9xoyLF/h75L9+C99awPn7c0VMsEZRi3b9sMeN1WNAzof3rVWgR073hFGFBfqFRfgMlQ1VKJuL9iQxJ0d+o5T8Fc1d1ZDDvWJwH1SX2zMbxqapQlIVbBdTTlglAwV3U05gL2TbNpYWN51OJo4edlqWl9cb6G40Vrl8agsdiYo565LkO+Bn4+LvUbHC8aoyR/Cg+pHs2as9CvCgScIySbScv/1mR1PK4L2x09BArO4XFzbE1WjwSXSjuLFm+g4Rw3DtvdbkNQC23/YMHxqkAGFiedMwQFUIpRwQYkBhbMnTJOw16M8sGG40UZh5iGEj/lSUpFoQJILCx32w2GkZJ5qMDxIibmgkRmchxCOnt0uRCqtiTD2pVxcKA8BZ5eWSr4BxMTs2qidrJF3nZUV6sF9H9c2ZoEqD+uBXql92ePzhMESUzMT4qs5N286eTTzWJQjAuDxhMLnO5vNmfB2HAp986ywmvI3nt6sJtecr/ednL6SAaszNW4hVhdFAPmQ+mCZtHuzFWRcpu3HRzcnjKwv2ymW4jDu2fR54IAiU0Q4BlT5u+M2ZHcwPNVTtehy8hlpasEr0M7oJBH/PW+ATTq8IHdm6ZD/7NBSHrdszl5YLI6HL49KOEEP2Ihm4T04FIBzIhXcsnxSthQMrU/aaoSYiePhc7mPEGzN7RJhIYZftba63K4C8fmQ+u5RT7xko5hxlxTOTvkMokJmfhAbdTNDcFUN/dvqrObhZchbBbsdqtqa+jYLcrrjnZryLB+vh18w0oM7gwrs/yJQQcsX5fo1vKHxKHpBhaiJIOHprQRj5109Ov1YzVhJPXc0XPTYsb989g5dHDPz46GX08Ce3DP1Y7u4M6XPqylhVMCAklw+iUaPq2pPSkeWQt00YA50a/VBFbysHpSPHIqvyXGKeDWxTyfb5ybTcLKb45rskYqFffvtBcwhcdJ3AywayMWMKXCC5jDSsAUQCnKv2hZ5jHom2vLgdx3hFLm0xKwa8tG1WGe/K5NnQho66Ht/GL44uInyVFTRkALBqaqObAwMwokYjFfRM8ORLVfgTKgatnfEO+jIuV9aFT7JqnkNlmY+C1ee4i6ijqJKvX2b4g/CwJdaIumKikAAAAASUVORK5CYII=";
+
+const imageDataN10 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAYAAACM/rhtAAAFWUlEQVRYw82YC0yTVxSACwZoeRWEAQXMeG1xA2QyN8RgjATYgDo23FDMTIw6deoknY4sGzMoIMg2cEiHgsB8MeaG4CgiL0fIeKhLNIbgaz5GUKMDeTiwQP9zdw75a8AUqUBLb/IlpPyPL+f+95x7j0Aw+eGGrEb2IWeQa0gv0sf/fRpJRz5CHAR6Gs5IAtJqb28PsStWQFZmJtRVVcG11la4194Od+/cgbbLl7kzCgWXnpoK70mlYGlpyeE9TcgWxFoXYhLkoJGRkTIyImKovLRU9V93NygfP2ba0P3wITtcUAALAwIAn9OD7EaspktuI01dWGjo4MXz54e0lRqPyvJyeMPPj0Q7kIipiJkjv9ja2nJFR44MTlVsNP09PSw1ORnMTE1JNA0xflE5W6R5nq8vd72tjZtOudH8WV8PzhIJo0AgJtrKWSAti4OC4N9790BXcmowAODp4QG85ISRNEJOvunvzzrv32e6llNzAyVdnJ1Jcu9EgtucHB3Z7Rs39CanpqmhAczMzEgyctzEi2mkv7ysTO9yaihv8qtbYwoqjl25UuuHtV66xAry8phs2za2TCplC/CzeMXLi3m4uzNfHx94NywMtm7eDAfkcvirpQUGensnfCZd4z9/PvB5cszwxvByf1+58ryboa66enDD+vUqV1dXsLe3YyEhwWzL5g2QkryTk+/PUOUfyhkuQHLkP6j2piZxsritsEwazubMcWV2s2fDipgYKD5+HHq7usZ9T1VFBfAlUzxa8MDaNWs03tDb2anCcjaAK+2Jnd1siF0ZA7kHs+FsbSX7o057jh3Jh/Xr1oCrqwtQmfwyPh46sCxqeidfcbao5cyo/JxrbBxz0ZO+PpafmzsskUiG3Nxehq+/ioeaqvIXktLE2drTDKMLvj7eYGVlxZISE6HvmYgWHjpEgs1qwXdemzt3zAU3r15lS5csYWKxGHZsj4O6moopi2kiJTkRnJ0l4O3tDReam59G89GDB2Bubk4bDCcSTNsukz2Vq6mspClgQUGLoLSkGHQhNpozp8vY8uj3QSQS0Yw9lYwID6coriLBmlMlJSP/KDp6lBMJhfDppk90LvYsybt3UtTYzoSEEZe0lBQS3E+Ct9tv3QJMGUBySbu+0bucmjxcfLa2NmyHTAb8am4Q4G7lCYUWdxZsT8quGZNTU1hwEPDbZ9LISPoG7wooarNmzWLxX8hmXE5N9v4MMMWAoaCSpphFR0cZjJya+B0ymmKVQCQSDtZUKQxKjig7WUyCjyiC7YryEoOLIE0zul0kwbPZWRkGF8HPZZ+R4E8k+P3GDesMTjA0JJjjD2yCKL95vgYlV1utABuxmARfJUFLY2PjgeKiwwYjmJ6WrEKv66O3Wz+vio0xGMFFgQEkmDhacLGFhQU7VXZixldzfl4ORx0Mvs0yZtR/uPyDoZkWfGuBP317P2o6kyzAkjeclytXzpRcAm6K0aMbcRzvZJeBW3JlZUWpSt9yRccKGXbBqP6ufd65mLb/FwIDA5S01PUlp/j9N+bu7kZyRdq0PlyQfzBRDulDEsss8/F5neQaEZG2/Rkvkgxc+LaqQod1+kTxUebl5cn4A5LNZLqp5/Cb5A7kZHHTLUebYxsbMcmV8A2rSQ36JtNpdS+PjuJOlU49T2LFguClS2i19iNxfMNqymM+UmdhYT5ycJ9MWcSOAyeNDOdMTEwoz/2KeOiiVx1EfTxjYyMlbTA2bVzH5NmZDNOSpg0n9923e7jVH8dynp4eHN/OyEN8BXoY1DeJ4TN+E5amDmtr6z4nJ0elg8NLA0KhsAt/v0lHWr7nF44IJ/Oi/wG6yuitOvmjTQAAAABJRU5ErkJggg==";
+
+const imageDataN14 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACcAAAAoCAYAAAB99ePgAAAEbklEQVRYw82Ye0xTVxzH2660SWnthCVrTeEfmXEDB+hEkRjA1AKJi2QuzsBm8AFBZqbYoEH+AUUUURMFymMBNSYkvrZpcIn8sWQBIw9dMelMiDzKoI6Up62bD/TU3/d6MagYKl7KPck3v55zfo/PfZ17biUS4dpyrVbrJLtCIsK2o+TIkedks8QIt/9CXR3gcsUId+iPhgbAFYoR7kT7rVuAOy5GOIu9sxNwFjHC1T4YGgJcrejIlApF3WO326MgKzq4gICAXwEHKzq4YIPhOuBgRQf3+eLFjYCDFR3cV8uWWQEHKzq4uNjYLsDBig7u63XrRgAHKzY22aaNG58BDhZ9oRJ/RtpB2sT/ls4gx8fp27YxwMGiP4McqBtCSiH9RFok0el0w3XnzrEqi4VlZmSwVdHRgxq1GstBMe8YSpJPt5KYd+/m4GDRn8ZfzudF/mLUQ93M9HSOAzzENSTx9/e3lp08yQbv3+eSQ/+NjXna29rY2dpaZs7OZokm06OgoKDblOgMyUwykRZMflgP5Odz8bDUj5w09ynJSMomnUYeyvc/8iK/leqg3kRtcJSfOsXAheB5pJ1KP7/6FVFRI3t27WL1V66wscHBV7AT6uvpYb9fvcqKi4rY9ykpLDIiYkipVGJdu/lzZSXnD0v9FowvjYx0ppIf/BHX1939Vk7UQT3URX2KqwcPz/Va+4i0nLSfyP+kI3xy/OhRZrNa30o6IdfwsOfunTvs4ego14dFH+PvirG1t7MTJSUsMSHhCepQvTxSFF/f66YlbSDVLAoJ6cc9cen8+dduAW8Ef8ThnkYe5CN9y+cXpOFpCiftpZ3H9VUrV7rzcnOZo7d3SlCMY55udDf5NyCOj5dKfND8SN99k5w8JRzGMc/7zUlLLjp4cEo4jGN+zl4LKpWqqd9u5+Ds9+6xtUYj6+ro4Pr99GRjfq7YotM2b+ZAHrlcHpPROI6nbk18/Dj6GMc8/HxOJpVKL/3V2srBWUpLAXGMnzpWUVbGjWMefr5mW5hgMo0DoLeri9HWvBNXeeJqfxIY2InLinlaK3FGF/oSrhQrPor/kJqKs5b0xnzS1rQ0bh5+8PcVWEBEeLgb99XNxkYmk8nqp3Ki8WstTU0MfvBHnC/gcmuqqrizEh8X95T6X7zDLzQ+NvYp/Gqqq3H2Zv0/FKXBYHDgvfnb5csoWDmNf9UvFy8y98gIvsociJ9NuC2HCwu5Lc6XS5a4qK+bxl8XFhrqgj/iED9bYLLA+fP/xku8uqIChQq8jCuoLC9nTocDT7VNIuAWfnJbvy8nB/s8T3Bw8AD1NV7GaWiDOTDqdHpyzGYc1HrBydRqdTM2m/w7c+d7hv+IuH9oTfRXqZqFZlublZnJ/u3rY4G0wFJf8Z7xCsQNUHzG9u04OKNgZHK5/FqHzcayaSsteflRMpOWgq04dsG0Bgr3SlsdE+O+3dzMaH/f9gE3tAzxLTduMFr/hPvwpk+3Fr1e30M/wz4wVdgCvd6u1WhavXF+ARY9KAT2gSA1AAAAAElFTkSuQmCC";
 
 ///////////////////////////////////////////////////////////////////////////////
 // main script body
@@ -1424,9 +1533,15 @@ function clickDay(dayNumber)
 		+ gregorianDay + "/" + gregorianMonth + "/" + gregorianYear
 		+ " / day " + dayNumber.toString()
 		+ " / JD " + gregorianToJulianDay(gregorianYear, gregorianMonth, gregorianDay) + "</div>";
+	
+	descriptionHTML += '<hr>';
+	// this doesn't work yet, so warn people (!)
+	descriptionHTML += '<span class="sopdet-visible-warning">WORK IN PROGRESS - NOT ACCURATE</span>';
+	descriptionHTML += '<ul class="sidebar-day-segment-area"></ul><hr>';
+	
 	if(festivalDataUCL.has(dayNumber))
 	{
-		descriptionHTML += "<hr><div>" + festivalDataUCL.get(dayNumber) + "</div>";
+		descriptionHTML += "<div>" + festivalDataUCL.get(dayNumber) + "</div>";
 	}
 	
 	// temporary stuff for showing information useful for debugging.
@@ -1434,16 +1549,54 @@ function clickDay(dayNumber)
 	if(test)
 	{
 		descriptionHTML += "<br>TESTS:<br>";
+		// TODO: report fails better
+		//let fail = 0;
+		//let count = 0;
 		for(const testFunction of testFunctions)
 		{
 			const testResult = testFunction();
-			descriptionHTML += '<p class="test-line">Testing &quot;' + testResult[0] + '&quot; Result:' + testResult[1] + "</p>";
+			descriptionHTML += '<p class="test-line">Testing &quot;' + testResult[0] + '&quot;<br>Result:' + testResult[1] + "</p>";
 		}
 		descriptionHTML += "<br><br>DEBUG:<br>";
 		descriptionHTML += JSON.stringify(debuggings, null, 4);
 	}
 	//*/
 	sidebar.innerHTML = descriptionHTML;
+	
+	// get the day segment container...
+	let container = sidebar.getElementsByClassName("sidebar-day-segment-area")[0];
+	
+	// add the bars.
+	let timeOfDay = 1.0 / 48.0;
+	const hourTime = 1.0 / 24.0;
+	for(let i = 0; i < 24; ++i)
+	{
+		// TODO: work out where the sun is for this time
+		
+		// TODO: work out where the moon is for this time
+		
+		// TODO: work out where sopdet is for this time
+		
+		// add a suitable bar.
+		let newHTML = container.innerHTML;
+		newHTML += '<li class="sidebar-day-sgement" style="background: rgb(11,'
+		
+		// TODO: drive this with sun altitude
+		const level = 254 - Math.abs(240 - i * 20);
+		const testHeight = clamp((level / 127) - 1, 0, 1);
+		
+		// TODO: a better gradient, maybe some reds in it?
+		newHTML += Math.floor(0.4 * level) + ',';
+		newHTML += Math.floor(64 + 0.75 * level) + ')">';
+		if(testHeight > 0.0)
+		{
+			const newStyle = "top: " + (-testHeight * 60) + "px;";
+			newHTML += '<img class="sun-marker" src="' + imageDataN5 + '" style="' + newStyle + '">';
+		}
+		newHTML += i.toString() + 'h';
+		newHTML += '</li>';
+		container.innerHTML = newHTML;
+	}
 }
 
 // debugs
