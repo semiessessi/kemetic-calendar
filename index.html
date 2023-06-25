@@ -437,7 +437,12 @@ function RA(hours, minutes, seconds)
 
 function Dec(degrees, minutes, seconds)
 {
-	return degrees + (minutes / 60) + (seconds / 3600);
+	if(degrees >= 0)
+	{
+		return degrees + (minutes / 60) + (seconds / 3600);
+	}
+	
+	return -(-degrees + (minutes / 60) + (seconds / 3600));
 }
 
 function displayTimeOfDaySeconds(seconds)
