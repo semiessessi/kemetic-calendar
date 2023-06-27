@@ -720,6 +720,8 @@ function calculateMeanObliquityOfEcliptic(julianDay)
 	];
 
 	//const arcseconds = evaluateSeriesPolynomial(terms, t);
+	// so clamping is continuous, but a more accurate approach is to use
+	// the long-term mean obliquity and ignore the small differences...
 	const arcseconds = evaluateSeriesPolynomial(terms100, clamp(t/100, -1, 1));
 	const degrees = arcseconds / 3600.0;
 	return degreesToRadians(degrees);
