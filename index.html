@@ -1886,7 +1886,7 @@ for (let day of allDays)
 		firstDayDown = dayCounter;
 	}
 	
-	if((secondDayUp < 0) && (sopdetAltitude > arcusVisionisSopdet))
+	if((firstDayDown >= 0) && (secondDayUp < 0) && (sopdetAltitude > arcusVisionisSopdet))
 	{
 		// ... its up
 		secondDayUp = dayCounter;
