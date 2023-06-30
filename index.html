@@ -291,12 +291,12 @@ body
 	{
 		width:29.5%;
 	}
-	
+
 	.intercalary li
 	{
 		width: 30%;
 	}
-	
+
 	.sidebar-day-segment-area
 	{
 		font-size: 35%;
@@ -324,7 +324,7 @@ body
 	{
 		width:46.5%;
 	}
-	
+
 	.intercalary li
 	{
 		width: 50%;
@@ -343,7 +343,7 @@ body
 	{
 		width: 100%;
 	}
-	
+
 	.sidebar-day-segment-area
 	{
 		font-size: 60%;
@@ -371,7 +371,7 @@ body
 	{
 		width:96.5%;
 	}
-	
+
 	.intercalary li
 	{
 		width: 96.5%;
@@ -390,7 +390,7 @@ body
 	{
 		width: 100%;
 	}
-	
+
 	.sidebar-day-segment-area
 	{
 		font-size: 40%;
@@ -404,45 +404,45 @@ body
 		background: #222;
 		color: #ccc;
 	}
-	
+
 	.sidebar
 	{
 		background: #222;
 	}
-	
+
 	.months
 	{
 		background: #333;
 	}
-	
+
 	.days
 	{
 		background: #222;
 		color: #aaa;
 	}
-	
+
 	.intercalary
 	{
 		background: #333;
 	}
-	
+
 	.months li
 	{
 		background: #222;
 		color: #ccc;
 	}
-	
+
 	.intercalary li
 	{
 		background: #222;
 		color: #ccc;
 	}
-	
+
 	.festival-date
 	{
 		background: #224477 !important;
 	}
-	
+
 	.sidebar-day-segment-area
 	{
 		background: #222;
@@ -586,7 +586,7 @@ function Dec(degrees, minutes, seconds)
 	{
 		return degrees + (minutes / 60) + (seconds / 3600);
 	}
-	
+
 	return -(-degrees + (minutes / 60) + (seconds / 3600));
 }
 
@@ -702,19 +702,19 @@ function getGMSTSeconds(julianDay)
 	const jMidnight = julianDay - ((julianDay - 0.5) % 1.0);
 	const tMidnight = toJulianCenturiesSinceJ2000(jMidnight);
 	const gmst0 = evaluateSeriesPolynomial(terms, tMidnight);
-	
+
 	// this was found on stack exchange...
 	const wTerms =
 	[
 		1.00273790935,
 		5.9e-11
 	];
-	
+
 	const wStar = evaluateSeriesPolynomial(wTerms, t);
-	
+
 	// get the time of day in seconds from midnight
 	const utcSeconds = (julianDay - jMidnight) * 24 * 3600;
-	
+
 	// calculate mod number of seconds in the day...
 	return (gmst0 + wStar * utcSeconds) % 86400;
 }
@@ -842,7 +842,7 @@ function RADecToCurrentEpoch(julianDay, raJ2000, decJ2000)
 	// this is from Meeus p 126
 	// convert Julian Day to centuries since J2000.0
 	const t = toJulianCenturiesSinceJ2000(julianDay);
-	
+
 	// note these are only valid for J2000.0, the coefficients vary for different epochs
 	const zeta = degreesToRadians(
 		t * (2306.2181 + t * (0.30188 + t * 0.017998)) / 3600);
@@ -850,7 +850,7 @@ function RADecToCurrentEpoch(julianDay, raJ2000, decJ2000)
 		t * (2306.2181 + t * (1.09468 + t * 0.018203)) / 3600);
 	const theta = degreesToRadians(
 		t * (2004.3109 + t * (0.42665 + t * 0.041833)) / 3600);
-	
+
 	const cosDecJ2000 = Math.cos(decJ2000);
 	const sinDecJ2000 = Math.sin(decJ2000);
 	const cosAdjustedRA = Math.cos(raJ2000 + zeta);
@@ -860,7 +860,7 @@ function RADecToCurrentEpoch(julianDay, raJ2000, decJ2000)
 	const A = cosDecJ2000 * sinAdjustedRA;
 	const B = cosTheta * cosDecJ2000 * cosAdjustedRA - sinTheta * sinDecJ2000;
 	const C = sinTheta * cosDecJ2000 * cosAdjustedRA + cosTheta * sinDecJ2000;
-	
+
 	const ra = Math.atan2(A, B) + z;
 	const dec = Math.asin(C);
 	return [ra, dec];
@@ -880,7 +880,7 @@ function calculateAltitudeAzimuth(
 	// convert right ascension (RA) and declination (Dec) to radians
 	const raJ2000Rad = degreesToRadians(raJ2000);
 	const decJ2000Rad = degreesToRadians(decJ2000);
-	
+
 	// then precession to the current epoch...
 	const raDec = RADecToCurrentEpoch(julianDay, raJ2000Rad, decJ2000Rad);
 	const raRad = raDec[0];
@@ -1062,8 +1062,8 @@ function calculateNextSunrise(julianDay, latitude, longitude)
 	// try to find a point where the sun is below the horizon to start...
 	// work out its position at each hour for the next 24 hours to start.
 	// it is simple minded but allows a binary search to complete the problem.
-	// ... in most cases	
-	
+	// ... in most cases
+
 	let hoursSunAltAz = new Array(24);
 	hoursSunAltAz[0] = evaluateSunCoordinates(julianDay, latitude, longitude);
 	let lastSunAlt = hoursSunAltAz[0][0];
@@ -1080,7 +1080,7 @@ function calculateNextSunrise(julianDay, latitude, longitude)
 		}
 		lastSunAlt = hoursSunAltAz[i][0];
 	}
-	
+
 	// binary search it a few steps...
 	let lower = riseHour - 1;
 	let upper = riseHour;
@@ -1103,9 +1103,9 @@ function calculateNextSunrise(julianDay, latitude, longitude)
 			upper = newValue;
 			upperCoords = newCoords;
 		}
-		
+
 	}
-	
+
 	return (lower + upper) / 2.0;
 }
 
@@ -1114,8 +1114,8 @@ function calculateNextSunset(julianDay, latitude, longitude)
 		// try to find a point where the sun is below the horizon to start...
 	// work out its position at each hour for the next 24 hours to start.
 	// it is simple minded but allows a binary search to complete the problem.
-	// ... in most cases	
-	
+	// ... in most cases
+
 	let hoursSunAltAz = new Array(24);
 	hoursSunAltAz[0] = evaluateSunCoordinates(julianDay, latitude, longitude);
 	let lastSunAlt = hoursSunAltAz[0][0];
@@ -1132,7 +1132,7 @@ function calculateNextSunset(julianDay, latitude, longitude)
 		}
 		lastSunAlt = hoursSunAltAz[i][0];
 	}
-	
+
 	// binary search it a few steps...
 	let lower = riseHour - 1;
 	let upper = riseHour;
@@ -1155,9 +1155,9 @@ function calculateNextSunset(julianDay, latitude, longitude)
 			upper = newValue;
 			upperCoords = newCoords;
 		}
-		
+
 	}
-	
+
 	return (lower + upper) / 2.0;
 }
 
@@ -1464,7 +1464,7 @@ function testSopdetAlt3a()
 
 function testSolarMeanAnomaly0()
 {
-	let testValue = 
+	let testValue =
 		solarMeanAnomaly(2448908.5) % 360;
 	if(testValue < 0)
 	{
@@ -1481,7 +1481,7 @@ function testSolarMeanAnomaly0()
 
 function testSolarMeanAnomaly1()
 {
-	const testValue = 
+	const testValue =
 		solarMeanAnomaly(2458849.5) % 360;
 	// value from JPL HORIZONS
 	const checkValue = 1.067387414341312e+02;
@@ -1493,7 +1493,7 @@ function testSolarMeanAnomaly1()
 
 function testSolarMeanAnomaly2()
 {
-	const testValue = 
+	const testValue =
 		solarMeanAnomaly(2459215.5) % 360;
 	// value from JPL HORIZONS
 	const checkValue = 7.972021595766104E+01;
@@ -1866,7 +1866,7 @@ for (let day of allDays)
 	{
 		day.classList.add("selected-date");
 	}
-	
+
 	// work out sunrise and sopdet altitude at that time.
 	let startDate = new Date(wepRonpetDate);
 	startDate.setDate(startDate.getDate() + (dayCounter - 1));
@@ -1879,13 +1879,13 @@ for (let day of allDays)
 		firstDayUp = dayCounter;
 		sopdetRisingDay = day;
 	}
-	
+
 	if((firstDayDown < 0) && (sopdetAltitude < arcusVisionisSopdet))
 	{
 		// ... its up
 		firstDayDown = dayCounter;
 	}
-	
+
 	if((firstDayDown >= 0) && (secondDayUp < 0) && (sopdetAltitude > arcusVisionisSopdet))
 	{
 		// ... its up
@@ -1961,12 +1961,12 @@ function geolocate()
 function applyChanges()
 {
 	let newLocation = window.location.pathname;
-	
+
 	if(datePicker.value != '2022-08-07')
 	{
 		newLocation+= "&wep-ronpet=" + datePicker.value;
 	}
-	
+
 	if(((today >= 1) ? today : 1) != selectedDay)
 	{
 		newLocation += "&selected-day=" + selectedDay;
@@ -1986,7 +1986,7 @@ function applyChanges()
 	{
 		newLocation += "&selected-location=" + selectedLocation;
 	}
-	
+
 	if(selectedTimezone != 0)
 	{
 		newLocation += "&selected-timezone=" + selectedTimezone;
@@ -2015,7 +2015,7 @@ function clickDay(dayNumber)
 	{
 		descriptionHTML = '<div class="sidebar-end-of-decan">End of Decan</div>' + descriptionHTML;
 	}
-	
+
 	if(selectedDay == sopdetDayNumber)
 	{
 		descriptionHTML = '<div class="sidebar-sopdet-day">Heliacal Rising of Sopdet (approximate)</div>' + descriptionHTML;
@@ -2030,15 +2030,15 @@ function clickDay(dayNumber)
 		+ gregorianDay + "/" + gregorianMonth + "/" + gregorianYear
 		+ " / day " + dayNumber.toString()
 		+ " / JD " + gregorianToJulianDay(gregorianYear, gregorianMonth, gregorianDay) + "</div>";
-	
+
 	descriptionHTML += '<hr>';
 	descriptionHTML += '<ul class="sidebar-day-segment-area"></ul><hr>';
-	
+
 	if(festivalDataUCL.has(dayNumber))
 	{
 		descriptionHTML += "<div>" + festivalDataUCL.get(dayNumber) + "</div>";
 	}
-	
+
 	// temporary stuff for showing information useful for debugging.
 	///*
 	if(test)
@@ -2055,10 +2055,10 @@ function clickDay(dayNumber)
 	}
 	//*/
 	sidebar.innerHTML = descriptionHTML;
-	
+
 	// get the day segment container...
 	let container = sidebar.getElementsByClassName("sidebar-day-segment-area")[0];
-	
+
 	// add the bars.
 	let timeOfDay = -selectedTimezone / 24.0;//1.0 / 48.0;
 	const hourTime = 1.0 / 24.0;
@@ -2069,15 +2069,15 @@ function clickDay(dayNumber)
 	{
 		const jdt = startJD + timeOfDay;
 		timeOfDay += hourTime;
-		
+
 		const sunAltitude = evaluateSunCoordinates(jdt, selectedLatitude, selectedLongitude)[0];
 		// TODO: work out where the moon is for this time
 		const sopdetAltitude = evaluateSopdetLocalPosition(jdt, selectedLatitude, selectedLongitude)[0];
-		
+
 		// add a suitable bar.
 		let newHTML = container.innerHTML;
 		newHTML += '<li class="sidebar-day-sgement" style="background: rgb(11,'
-		
+
 		const rawLevel = sunAltitude / (Math.PI * 0.5);
 		const level = clamp(rawLevel, 0, 1);
 		const sopdetLevel = clamp(sopdetAltitude / (Math.PI * 0.5), 0, 1);
@@ -2099,7 +2099,7 @@ function clickDay(dayNumber)
 		newHTML += '</li>';
 		container.innerHTML = newHTML;
 	}
-	
+
 	let decSunrise = calculateNextSunrise(startJD, selectedLatitude, selectedLongitude);
 	decSunrise += selectedTimezone;
 	if(decSunrise < 0)
@@ -2122,7 +2122,7 @@ function clickDay(dayNumber)
 		+ minutesFromDecimal(decSunset) + "m "
 		//+ secondsFromDecimal(decSunset) + "s "
 		+ "</div>";
-	
+
 	sidebar.innerHTML = sidebar.innerHTML + sunriseHTML + sunsetHTML;
 }
 
