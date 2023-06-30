@@ -90,6 +90,12 @@ body
 	color: #00a;
 }
 
+.sidebar-sopdet-day
+{
+	color: #00a;
+}
+
+
 .sidebar-title
 {
 	font-size: 115%;
@@ -244,6 +250,12 @@ body
 .festival-date
 {
 	background: #6aeccc !important;
+}
+
+.sopdet-heliacal-rising-day
+{
+	background: #f0bcbc !important;
+	color: #070 !important;
 }
 
 .today-date
@@ -1000,6 +1012,8 @@ function evaluateSunCoordinates(julianDay, latitude, longitude)
 }
 
 const sopdetMaxVisibleLatitude = 90 + Dec(-16, 42, 58.0171);
+const arcusVisionisSopdet = degreesToRadians(10);
+
 // these have timezones tacked on.
 const locations =
 [
@@ -1827,6 +1841,10 @@ intercalaryContainer.appendChild(lastMonth);
 // the document
 let allDays = document.getElementsByClassName("day");
 let dayCounter = 1;
+let firstDayUp = -1;
+let firstDayDown = -1;
+let secondDayUp = -1;
+let sopdetRisingDay = null;
 for (let day of allDays)
 {
 	const currentDay = dayCounter; // this is important...
@@ -1848,12 +1866,45 @@ for (let day of allDays)
 	{
 		day.classList.add("selected-date");
 	}
+	
+	// work out sunrise and sopdet altitude at that time.
+	let startDate = new Date(wepRonpetDate);
+	startDate.setDate(startDate.getDate() + (dayCounter - 1));
+	const startJD = gregorianToJulianDay(startDate.getFullYear(), startDate.getMonth() + 1, startDate.getDate());
+	const sunriseTime = calculateNextSunrise(startJD, selectedLatitude, selectedLongitude);
+	const sopdetAltitude = evaluateSopdetLocalPosition(startJD + sunriseTime / 24, selectedLatitude, selectedLongitude)[0];
+	if((firstDayUp < 0) && (sopdetAltitude > arcusVisionisSopdet))
+	{
+		// ... its up. this might eb the rising, might not be.
+		firstDayUp = dayCounter;
+		sopdetRisingDay = day;
+	}
+	
+	if((firstDayDown < 0) && (sopdetAltitude < arcusVisionisSopdet))
+	{
+		// ... its up
+		firstDayDown = dayCounter;
+	}
+	
+	if((secondDayUp < 0) && (sopdetAltitude > arcusVisionisSopdet))
+	{
+		// ... its up
+		secondDayUp = dayCounter;
+		// this is the rising
+		sopdetRisingDay = day;
+	}
 
 	// having the const variable makes this work as expected.
 	// there is a copy for each one, if we use dayCounter
 	// naively we just end up referencing the value.
 	day.onclick = function(){clickDay(currentDay);}
 	++dayCounter;
+}
+
+let sopdetDayNumber = (secondDayUp < 0) ? firstDayUp : secondDayUp;
+if(sopdetRisingDay != null)
+{
+	sopdetRisingDay.classList.add("sopdet-heliacal-rising-day");
 }
 
 function updateMonthStyle()
@@ -1963,6 +2014,11 @@ function clickDay(dayNumber)
 	if((selectedDay % 10) == 0)
 	{
 		descriptionHTML = '<div class="sidebar-end-of-decan">End of Decan</div>' + descriptionHTML;
+	}
+	
+	if(selectedDay == sopdetDayNumber)
+	{
+		descriptionHTML = '<div class="sidebar-sopdet-day">Heliacal Rising of Sopdet (approximate)</div>' + descriptionHTML;
 	}
 
 	if(selectedDay == today)
