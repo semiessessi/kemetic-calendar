@@ -578,6 +578,26 @@ function Dec(degrees, minutes, seconds)
 	return -(-degrees + (minutes / 60) + (seconds / 3600));
 }
 
+function minutesFromDecimal(decimal)
+{
+	let minutes = (decimal * 60) % 60;
+	if(minutes < 0)
+	{
+		minutes += 60;
+	}
+	return Math.floor(minutes);
+}
+
+function secondsFromDecimal(decimal)
+{
+	let seconds = (decimal * 3600) % 60;
+	if(seconds < 0)
+	{
+		seconds += 60;
+	}
+	return seconds;
+}
+
 function displayTimeOfDaySeconds(seconds)
 {
 	return (Math.floor(seconds / 3600)) + "h" + (Math.floor(seconds / 60) % 60) + "m" + (Math.floor(seconds) % 60) + "s";
@@ -1020,12 +1040,16 @@ const timezones =
 	["UTC+11", 11],
 ];
 
+// approximate apparent angular radius and atmospheric distortion (from wikipedia).
+const sunRiseAngle = degreesToRadians(-0.83);
+
 function calculateNextSunrise(julianDay, latitude, longitude)
 {
 	// try to find a point where the sun is below the horizon to start...
 	// work out its position at each hour for the next 24 hours to start.
 	// it is simple minded but allows a binary search to complete the problem.
-	// ... in most cases
+	// ... in most cases	
+	
 	let hoursSunAltAz = new Array(24);
 	hoursSunAltAz[0] = evaluateSunCoordinates(julianDay, latitude, longitude);
 	let lastSunAlt = hoursSunAltAz[0][0];
@@ -1035,13 +1059,92 @@ function calculateNextSunrise(julianDay, latitude, longitude)
 	{
 		hoursSunAltAz[i] = evaluateSunCoordinates(
 			julianDay + i*timeStep, latitude, longitude);
-		if((riseHour < 0) && (hoursSunAltAz[i][0] > 0.0) && (lastSunAlt < 0.0))
+		if((riseHour < 0) && (hoursSunAltAz[i][0] > sunRiseAngle) && (lastSunAlt < sunRiseAngle))
 		{
 			riseHour = i;
+			break;
 		}
 		lastSunAlt = hoursSunAltAz[i][0];
 	}
-	return [ riseHour, hoursSunAltAz ];
+	
+	// binary search it a few steps...
+	let lower = riseHour - 1;
+	let upper = riseHour;
+	let lowerCoords = evaluateSunCoordinates(
+			julianDay + lower * timeStep, latitude, longitude);
+	let upperCoords = evaluateSunCoordinates(
+			julianDay + upper * timeStep, latitude, longitude);
+	for(let i = 1; i < 16; ++i)
+	{
+		let newValue = (lower + upper) / 2.0;
+		let newCoords = evaluateSunCoordinates(
+			julianDay + newValue * timeStep, latitude, longitude);
+		if(newCoords[0] < sunRiseAngle)
+		{
+			lower = newValue;
+			lowerCoords = newCoords;
+		}
+		else
+		{
+			upper = newValue;
+			upperCoords = newCoords;
+		}
+		
+	}
+	
+	return (lower + upper) / 2.0;
+}
+
+function calculateNextSunset(julianDay, latitude, longitude)
+{
+		// try to find a point where the sun is below the horizon to start...
+	// work out its position at each hour for the next 24 hours to start.
+	// it is simple minded but allows a binary search to complete the problem.
+	// ... in most cases	
+	
+	let hoursSunAltAz = new Array(24);
+	hoursSunAltAz[0] = evaluateSunCoordinates(julianDay, latitude, longitude);
+	let lastSunAlt = hoursSunAltAz[0][0];
+	let riseHour = -1;
+	let timeStep = 1.0 / 24.0;
+	for(let i = 1; i < 96; ++i)
+	{
+		hoursSunAltAz[i] = evaluateSunCoordinates(
+			julianDay + i*timeStep, latitude, longitude);
+		if((riseHour < 0) && (hoursSunAltAz[i][0] < sunRiseAngle) && (lastSunAlt > sunRiseAngle))
+		{
+			riseHour = i;
+			break;
+		}
+		lastSunAlt = hoursSunAltAz[i][0];
+	}
+	
+	// binary search it a few steps...
+	let lower = riseHour - 1;
+	let upper = riseHour;
+	let lowerCoords = evaluateSunCoordinates(
+			julianDay + lower * timeStep, latitude, longitude);
+	let upperCoords = evaluateSunCoordinates(
+			julianDay + upper * timeStep, latitude, longitude);
+	for(let i = 1; i < 16; ++i)
+	{
+		let newValue = (lower + upper) / 2.0;
+		let newCoords = evaluateSunCoordinates(
+			julianDay + newValue * timeStep, latitude, longitude);
+		if(newCoords[0] > sunRiseAngle)
+		{
+			lower = newValue;
+			lowerCoords = newCoords;
+		}
+		else
+		{
+			upper = newValue;
+			upperCoords = newCoords;
+		}
+		
+	}
+	
+	return (lower + upper) / 2.0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1893,8 +1996,6 @@ function clickDay(dayNumber)
 			const testResult = testFunction();
 			descriptionHTML += '<p class="test-line">Testing &quot;' + testResult[0] + '&quot;<br>Result:' + testResult[1] + "</p>";
 		}
-		descriptionHTML += "<br><br>DEBUG:<br>";
-		descriptionHTML += JSON.stringify(debuggings, null, 4);
 	}
 	//*/
 	sidebar.innerHTML = descriptionHTML;
@@ -1906,8 +2007,8 @@ function clickDay(dayNumber)
 	let timeOfDay = -selectedTimezone / 24.0;//1.0 / 48.0;
 	const hourTime = 1.0 / 24.0;
 	let startDate = new Date(wepRonpetDate);
-	startDate.setDate(debugsGregorianDate.getDate() + (selectedDay - 1));
-	const startJD = gregorianToJulianDay(debugsGregorianDate.getFullYear(), debugsGregorianDate.getMonth() + 1, debugsGregorianDate.getDate());
+	startDate.setDate(startDate.getDate() + (selectedDay - 1));
+	const startJD = gregorianToJulianDay(startDate.getFullYear(), startDate.getMonth() + 1, startDate.getDate());
 	for(let i = 0; i < 24; ++i)
 	{
 		const jdt = startJD + timeOfDay;
@@ -1942,13 +2043,32 @@ function clickDay(dayNumber)
 		newHTML += '</li>';
 		container.innerHTML = newHTML;
 	}
+	
+	let decSunrise = calculateNextSunrise(startJD, selectedLatitude, selectedLongitude);
+	decSunrise += selectedTimezone;
+	if(decSunrise < 0)
+	{
+		decSunrise += 24;
+	}
+	let decSunset = calculateNextSunset(startJD, selectedLatitude, selectedLongitude);
+	decSunset += selectedTimezone;
+	if(decSunset < 0)
+	{
+		decSunset += 24;
+	}
+	const sunriseHTML = '<div class="sunrise">Estimated sunrise time:'
+		+ Math.floor(decSunrise) + "h "
+		+ minutesFromDecimal(decSunrise) + "m "
+		//+ secondsFromDecimal(decSunrise) + "s "
+		+ "</div>";
+	const sunsetHTML = '<div class="sunset">Estimated sunset time:'
+		+ Math.floor(decSunset) + "h "
+		+ minutesFromDecimal(decSunset) + "m "
+		//+ secondsFromDecimal(decSunset) + "s "
+		+ "</div>";
+	
+	sidebar.innerHTML = sidebar.innerHTML + sunriseHTML + sunsetHTML;
 }
-
-// debugs
-let debugsGregorianDate = new Date(wepRonpetDate);
-debugsGregorianDate.setDate(debugsGregorianDate.getDate() + (selectedDay - 1));
-let foob = gregorianToJulianDay(debugsGregorianDate.getFullYear(), debugsGregorianDate.getMonth() + 1, debugsGregorianDate.getDate());
-let debuggings = calculateNextSunrise(foob - 0.5, selectedLatitude, selectedLongitude);
 
 clickDay(selectedDay);
 
