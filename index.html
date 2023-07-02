@@ -806,6 +806,34 @@ function lunarArgumentOfLatitude(julianDay)
 	return 93.2720993 + t * (483202.0175273 + t * (-0.0034029 + t * (-1.0 / 3526000.0 + t / 863310000.0)));
 }
 
+// Meeus suggests against doing this, but it seems fine to me...
+// after all the series is a polynomial interpolation and smooth on a huge timescale.
+function approximateMoonPhase(julianDay)
+{
+	// from Meeus p.319
+	// JDE = 2451 550.09765 + 29.530 588 853 k
+	//	+ 0.000 1337 T2
+	//	- 0.000 000 150 T3
+	//	+ 0.000 000 000 73 T4
+	const t = toJulianCenturiesSinceJ2000(julianDay);
+	const lhs = julianDay - 2451550.09765 + (- 0.0001337 + (0.00000015 - 0.00000000073 * t) * t) * t * t;
+	return lhs / 29.530588853;
+}
+
+function nextLunarNewMoonDate(julianDay)
+{
+	// from Meeus p.319
+	// JDE = 2451 550.09765 + 29.530 588 853 k
+	//	+ 0.000 1337 T2
+	//	- 0.000 000 150 T3
+	//	+ 0.000 000 000 73 T4
+	const t = toJulianCenturiesSinceJ2000(julianDay);
+	const k = approximateMoonPhase(julianDay);
+	return 2451550.09765
+		+ 29.530588853 * k
+		+ t * t * (0.0001337 + t * (-0.00000015 + t * 0.00000000073));
+}
+
 // TODO: this needs checking. the comments do not match the maths
 // on that elongation....
 function calculateNutationLongitude(julianDay)
@@ -2222,6 +2250,16 @@ function clickDay(dayNumber)
 	firstCall = false;
 	let month =  Math.floor((selectedDay - 1) / 30);
 	let dayInMonth = ((selectedDay - 1) % 30) + 1;
+	
+	let timeOfDay = -selectedTimezone / 24.0;//1.0 / 48.0;
+	const hourTime = 1.0 / 24.0;
+	let startDate = new Date(wepRonpetDate);
+	startDate.setDate(startDate.getDate() + (selectedDay - 1));
+	const startJD = gregorianToJulianDay(startDate.getFullYear(), startDate.getMonth() + 1, startDate.getDate());
+	const moonStartPhase = approximateMoonPhase(startJD + timeOfDay);
+	const moonEndPhase = approximateMoonPhase(startJD + timeOfDay + 1);
+	const newMoon = Math.floor(moonStartPhase) < Math.floor(moonEndPhase);
+	const fullMoon = Math.floor(moonStartPhase + 0.5) < Math.floor(moonEndPhase + 0.5);
 	let descriptionHTML = '<div class = "sidebar-title">' + seasonMonths[month] + ", " + dayInMonth.toString() + "</div>";
 
 	if((selectedDay % 10) == 0)
@@ -2237,6 +2275,15 @@ function clickDay(dayNumber)
 	if(selectedDay == today)
 	{
 		descriptionHTML = '<div class="sidebar-today-title">Today</div>' + descriptionHTML;
+	}
+	
+	if(newMoon)
+	{
+		descriptionHTML = '<div class="sidebar-moon-phase-title">New Moon</div>' + descriptionHTML;
+	}
+	else if(fullMoon)
+	{
+		descriptionHTML = '<div class="sidebar-moon-phase-title">Full Moon</div>' + descriptionHTML;
 	}
 
 	descriptionHTML += '<div class="sidebar-date-simple">'
@@ -2273,11 +2320,6 @@ function clickDay(dayNumber)
 	let container = sidebar.getElementsByClassName("sidebar-day-segment-area")[0];
 
 	// add the bars.
-	let timeOfDay = -selectedTimezone / 24.0;//1.0 / 48.0;
-	const hourTime = 1.0 / 24.0;
-	let startDate = new Date(wepRonpetDate);
-	startDate.setDate(startDate.getDate() + (selectedDay - 1));
-	const startJD = gregorianToJulianDay(startDate.getFullYear(), startDate.getMonth() + 1, startDate.getDate());
 	for(let i = 0; i < 24; ++i)
 	{
 		const jdt = startJD + timeOfDay;
