@@ -1797,11 +1797,31 @@ if(urlParams.has('test'))
 	test = true;
 }
 
+// festival selection
+let festivals = "ucl";
+if(urlParams.has('festivals'))
+{
+	festivals = urlParams.get('festivals');
+	if((festivals != "kemetic-reform")
+		&& (festivals != "ucl"))
+	{
+		festivals = "ucl";
+	}
+}
+
 // key date
 let todayDate = new Date();
 let wepRonpetDate = new Date();
-wepRonpetDate.setMonth(7);
-wepRonpetDate.setDate(7);
+if(festivals == "kemetic-reform")
+{
+	wepRonpetDate.setMonth(6);
+	wepRonpetDate.setDate(18);
+}
+else
+{
+	wepRonpetDate.setMonth(7);
+	wepRonpetDate.setDate(7);
+}
 if(wepRonpetDate > todayDate)
 {
 	wepRonpetDate.setFullYear(wepRonpetDate.getFullYear()-1);
@@ -1946,9 +1966,31 @@ const monthNamesGreek =
 	"Epagomenai"
 ];
 
+const monthNamesKemeticReform =
+[
+	"Djehutet",
+	"Pa'en-Opet",
+	"Athur",
+	"Khoiak",
+	"Tubí",
+	"Mekhír",
+	"Phamenoth",
+	"Pharmouthi",
+	"Pakhon",
+	"Paoni",
+	"Epiphi",
+	"Mesore",
+	"Epagomenai"
+];
+
 // month style
 let monthStyle = 0;
 let monthNames = monthNamesDefault;
+if(festivals == "kemetic-reform")
+{
+	monthNames = monthNamesKemeticReform;
+}
+
 if(urlParams.has('month-style'))
 {
 	monthStyle = urlParams.get('month-style');
@@ -2025,6 +2067,32 @@ const festivalDataUCL = new Map(
 	[360 + 5, "Birthday of Nephthys"],
 ]);
 
+const festivalDataKemeticReform = new Map(
+[
+	[1, "Upet Ronpet (Kemetic Reform New Year's); Mesopotamian month of Abu begins"],
+	[4, "Poret Sopdut Observed"],
+	[6, "First Quarter (First Denit)"],
+	[10, "Decade 1"],
+	[11, "Going Forth of Hathor; Feast of Tefnut at Esna"],
+	[15, "Full Moon"],
+	[18, "Wa'gy-Djehutet Observance"],
+	[20, "Decade 2"],
+	[22, "Last Quarter (Second Denit)"],
+	[25, "Feast for Anubis in Denderah; Osiris Goes Forth"],
+	[29, "Mesopotamian Festival of Ghosts (approximate)"],
+	[30, "Decade 3; New Moon"],
+	
+	[30 + 1, "Feasts for Neith, Horus the Elder and Sobek, Lord of Ombos"],
+	[30 + 5, "First Quarter (First Denit)"],
+	[30 + 9, "Sailing of Horus of Behdet; Procession of Bastet, Mistress of Ankh-Tawy"],
+]);
+
+const festivalMap = new Map(
+[
+	[ "ucl", festivalDataUCL ],
+	[ "kemetic-reform", festivalDataKemeticReform ]
+]);
+
 let sidebar = document.getElementsByClassName("sidebar")[0];
 let monthsContainer = document.getElementsByClassName("months")[0];
 
@@ -2093,7 +2161,7 @@ for (let day of allDays)
 	{
 		day.classList.add("today-date");
 	}
-	else if(festivalDataUCL.has(currentDay))
+	else if(festivalMap.get(festivals).has(currentDay))
 	{
 		day.classList.add("festival-date");
 	}
@@ -2151,6 +2219,12 @@ if(sopdetRisingDay != null)
 function updateMonthStyle()
 {
 	monthStyle = document.getElementById('month-names').value;
+	applyChanges();
+}
+
+function applyFestivalSelection()
+{
+	// TODO: ...
 	applyChanges();
 }
 
@@ -2232,6 +2306,11 @@ function applyChanges()
 	{
 		newLocation += "&selected-timezone=" + selectedTimezone;
 	}
+	
+	if(festivals != "ucl")
+	{
+		newLocation += "&festivals=" + festivals;
+	}
 
 	window.location = newLocation.replace('&', '?');
 }
@@ -2294,9 +2373,9 @@ function clickDay(dayNumber)
 	descriptionHTML += '<hr>';
 	descriptionHTML += '<ul class="sidebar-day-segment-area"></ul><hr>';
 
-	if(festivalDataUCL.has(dayNumber))
+	if(festivalMap.get(festivals).has(dayNumber))
 	{
-		descriptionHTML += "<div>" + festivalDataUCL.get(dayNumber) + "</div>";
+		descriptionHTML += "<div>" + festivalMap.get(festivals).get(dayNumber) + "</div>";
 	}
 
 	// temporary stuff for showing information useful for debugging.
