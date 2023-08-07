@@ -1970,17 +1970,17 @@ const monthNamesKemeticReform =
 [
 	"Djehutet",
 	"Pa'en-Opet",
-	"Athur",
-	"Khoiak",
-	"Tubí",
-	"Mekhír",
-	"Phamenoth",
-	"Pharmouthi",
-	"Pakhon",
-	"Paoni",
-	"Epiphi",
-	"Mesore",
-	"Epagomenai"
+	"Hat-Hor",
+	"Ka-Hor-Ka",
+	"Ta'ibet",
+	"Makhír",
+	"Pa'en-Amunhotepu",
+	"Pa'en-Rennutet",
+	"Pa-Khonsu",
+	"Pa'en-Inet",
+	"Apip",
+	"Mosu-Ra",
+	"Holy Week"
 ];
 
 // month style
@@ -2082,9 +2082,19 @@ const festivalDataKemeticReform = new Map(
 	[29, "Mesopotamian Festival of Ghosts (approximate)"],
 	[30, "Decade 3; New Moon"],
 	
-	[30 + 1, "Feasts for Neith, Horus the Elder and Sobek, Lord of Ombos"],
-	[30 + 5, "First Quarter (First Denit)"],
+	[30 + 1, "Mesopotamian month of Ulullu begins"],
+	[30 + 2, "Feasts for Neith, Horus the Elder and Sobek, Lord of Ombos"],
+	[30 + 6, "First Quarter (First Denit)"],
 	[30 + 9, "Sailing of Horus of Behdet; Procession of Bastet, Mistress of Ankh-Tawy"],
+	[30 + 10, "Decade 4"],
+	[30 + 14, "Full Moon; Mesopotamian Feast of Kin-Inanna"],
+	[30 + 16, "Robing of Anubis; Feasts of Unnofer (Osiris) and Neith"],
+	[30 + 19, "Labor Day (US)"],
+	[30 + 20, "Decade 5"],
+	[30 + 21, "Last Quarter (Second Denit)"],
+	[30 + 23, "Opet Festival"],
+	[30 + 29, "New Moon"],
+	[30 + 30, "Decade 6"],
 ]);
 
 const festivalMap = new Map(
@@ -2277,9 +2287,19 @@ function applyChanges()
 {
 	let newLocation = window.location.pathname;
 
-	if(datePicker.value != '2022-08-07')
+	if(festivals == "kemetic-reform")
 	{
-		newLocation+= "&wep-ronpet=" + datePicker.value;
+		if(datePicker.value != '2023-07-18')
+		{
+			newLocation+= "&wep-ronpet=" + datePicker.value;
+		}
+	}
+	else
+	{
+		if(datePicker.value != '2022-08-07')
+		{
+			newLocation+= "&wep-ronpet=" + datePicker.value;
+		}
 	}
 
 	if(((today >= 1) ? today : 1) != selectedDay)
