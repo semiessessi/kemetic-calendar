@@ -2202,6 +2202,16 @@ for(let i = 2; i <= 30; ++i)
 	firstMonthDaysContainer.appendChild(clonedDay);
 }
 
+// work out if we need a leap day.
+let leap = false;
+if(festivals == "kemetic-reform")
+{
+	let testYear = wepRonpetDate.getFullYear() + 1;
+	leap = (((testYear % 4) == 0)
+			&& ((testYear % 100) != 0))
+		|| ((testYear % 400) == 0)
+}
+
 // now clone the months
 for(let i = 1; i < 12; ++i)
 {
@@ -2250,7 +2260,8 @@ for (let day of allDays)
 		day.classList.add("festival-date");
 	}
 
-	if((currentDay % 10) == 0)
+	const dayForDecanTest = parseInt(day.innerHTML);
+	if((dayForDecanTest % 10) == 0)
 	{
 		day.classList.add("end-of-decan");
 	}
@@ -2260,6 +2271,21 @@ for (let day of allDays)
 		day.classList.add("selected-date");
 	}
 
+	let testDate = new Date(wepRonpetDate);
+	testDate.setDate(testDate.getDate() + (dayCounter - 1));
+	if(leap && (testDate.getMonth() == 1) && (testDate.getDate() == 29))
+	{
+		// its a leap year day
+		// add the 31 on this month for kemetic reform
+		// the live nature of the collection should update it
+		if(festivals == "kemetic-reform")
+		{
+			let leapDay = day.cloneNode(true);
+			leapDay.innerHTML = "31";
+			day.parentElement.appendChild(leapDay);
+		}
+	}
+	
 	// work out sunrise and sopdet altitude at that time.
 	let startDate = new Date(wepRonpetDate);
 	startDate.setDate(startDate.getDate() + (dayCounter - 1));
