@@ -2344,11 +2344,19 @@ for (let day of allDays)
 	}
 
 	const currentDay = dayCounter; // this is important...
+	let festivalDayLookup = currentDay;
+	// handle Kemetic Reform leap day.
+	if((leap == false)
+		&& (festivals == "kemetic-reform")
+		&& (currentDay > 226))
+	{
+		++festivalDayLookup;
+	}
 	if(currentDay == today)
 	{
 		day.classList.add("today-date");
 	}
-	else if(festivalMap.get(festivals).has(currentDay))
+	else if(festivalMap.get(festivals).has(festivalDayLookup))
 	{
 		day.classList.add("festival-date");
 	}
@@ -2414,6 +2422,11 @@ function updateFestivals()
 {
 	// TODO: ...
 	festivals = document.getElementById('festival-lists').value;
+	if((festivals == "kemetic-reform")
+		&& (monthStyle == 0))
+	{
+		monthStyle = 3;
+	}
 	applyChanges();
 }
 
@@ -2573,9 +2586,17 @@ function clickDay(dayNumber)
 	descriptionHTML += '<hr>';
 	descriptionHTML += '<ul class="sidebar-day-segment-area"></ul><hr>';
 
-	if(festivalMap.get(festivals).has(dayNumber))
+	let festivalDayLookup = dayNumber;
+	// handle Kemetic Reform leap day.
+	if((leap == false)
+		&& (festivals == "kemetic-reform")
+		&& (dayNumber > 226))
 	{
-		descriptionHTML += "<div>" + festivalMap.get(festivals).get(dayNumber) + "</div>";
+		++festivalDayLookup;
+	}
+	if(festivalMap.get(festivals).has(festivalDayLookup))
+	{
+		descriptionHTML += "<div>" + festivalMap.get(festivals).get(festivalDayLookup) + "</div>";
 	}
 
 	// temporary stuff for showing information useful for debugging.
