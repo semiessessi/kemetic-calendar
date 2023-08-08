@@ -2250,6 +2250,23 @@ let secondDayUp = -1;
 let sopdetRisingDay = null;
 for (let day of allDays)
 {
+	// its important to add the leap day first so that we don't
+	// inherit style from the end of decan, or festial etc...
+	let testDate = new Date(wepRonpetDate);
+	testDate.setDate(testDate.getDate() + (dayCounter - 1));
+	if(leap && (testDate.getMonth() == 1) && (testDate.getDate() == 29))
+	{
+		// its a leap year day
+		// add the 31 on this month for kemetic reform
+		// the live nature of the collection should update it
+		if(festivals == "kemetic-reform")
+		{
+			let leapDay = day.cloneNode(true);
+			leapDay.innerHTML = "31";
+			day.parentElement.appendChild(leapDay);
+		}
+	}
+	
 	const currentDay = dayCounter; // this is important...
 	if(currentDay == today)
 	{
@@ -2269,21 +2286,6 @@ for (let day of allDays)
 	if(currentDay == selectedDay)
 	{
 		day.classList.add("selected-date");
-	}
-
-	let testDate = new Date(wepRonpetDate);
-	testDate.setDate(testDate.getDate() + (dayCounter - 1));
-	if(leap && (testDate.getMonth() == 1) && (testDate.getDate() == 29))
-	{
-		// its a leap year day
-		// add the 31 on this month for kemetic reform
-		// the live nature of the collection should update it
-		if(festivals == "kemetic-reform")
-		{
-			let leapDay = day.cloneNode(true);
-			leapDay.innerHTML = "31";
-			day.parentElement.appendChild(leapDay);
-		}
 	}
 	
 	// work out sunrise and sopdet altitude at that time.
