@@ -466,6 +466,7 @@ body
 		<option value="0">Middle Kingdom</option>
 		<option value="1">New Kingdom</option>
 		<option value="2">Greek</option>
+		<option value="3">Kemetic Reform</option>
 	</select>
 	<hr>
 	<label for="location-choice">Location:</label>
@@ -1988,19 +1989,28 @@ let monthStyle = 0;
 let monthNames = monthNamesDefault;
 if(festivals == "kemetic-reform")
 {
+	monthStyle = 3;
 	monthNames = monthNamesKemeticReform;
 }
 
 if(urlParams.has('month-style'))
 {
 	monthStyle = urlParams.get('month-style');
-	if(monthStyle == 1)
+	if(monthStyle == 0)
+	{
+		monthNames = monthNamesDefault;
+	}
+	else if(monthStyle == 1)
 	{
 		monthNames = monthNamesNew;
 	}
-	else if(monthStyle >= 2)
+	else if(monthStyle == 2)
 	{
 		monthNames = monthNamesGreek;
+	}
+	else if(monthStyle == 3)
+	{
+		monthNames = monthNamesKemeticReform;
 	}
 }
 // set the dropdown for style of months
@@ -2469,7 +2479,8 @@ function applyChanges()
 		newLocation += "&selected-day=" + selectedDay;
 	}
 
-	if(monthStyle != 0)
+	let defaultMonthStyle = (festivals == "kemetic-reform") ? 3 : 0;
+	if(monthStyle != defaultMonthStyle)
 	{
 		newLocation += "&month-style=" + monthStyle;
 	}
