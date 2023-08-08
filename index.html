@@ -2119,7 +2119,7 @@ const festivalDataKemeticReform = new Map(
 	[90 + 26, "Khoiakh Mysteries Conclude"],
 	[90 + 29, "New Moon"],
 	[90 + 30, "Decade 12;  Mesopotamian month of Kislimu begins"],
-	
+
 	[120 + 2, "Ishtar Takes the Mes and Wears the Robe of Marduk"],
 	[120 + 3, "Hab Sed of Tutankhamun; Coronation of the Falcon"],
 	[120 + 5, "First Quarter (First Denit)"],
@@ -2134,7 +2134,7 @@ const festivalDataKemeticReform = new Map(
 	[120 + 28, "New Moon"],
 	[120 + 29, "Mesopotamian month of Tebetu begins"],
 	[120 + 30, "Decade 15"],
-	
+
 	[150 + 1, "Sailings of Mut and Anubis; Ptah Lifts the Sky"],
 	[150 + 3, "First Quarter (First Denit)"],
 	[150 + 7, "Winter Solstice (Northern Hemisphere)"],
@@ -2150,7 +2150,7 @@ const festivalDataKemeticReform = new Map(
 	[150 + 28, "New Moon"],
 	[150 + 29, "Feast of Filling the Sacred Eye; Mesopotamian month of Shabatu begins"],
 	[150 + 30, "Decade 18"],
-	
+
 	[180 + 3, "First Quarter (First Denit)"],
 	[180 + 6, "Going Forth of Neith of Sais and of Anubis"],
 	[180 + 10, "Decade 19"],
@@ -2160,7 +2160,7 @@ const festivalDataKemeticReform = new Map(
 	[180 + 27, "New Moon; Amun and Wadjyt Enter the Sky"],
 	[180 + 28, "Mesopotamian month of Addaru begins"],
 	[180 + 30, "Decade 21"],
-	
+
 	[210 + 3, "First Quarter (First Denit)"],
 	[210 + 4, "Feast of Bastet in Her Barque"],
 	[210 + 10, "Decade 22"],
@@ -2169,6 +2169,66 @@ const festivalDataKemeticReform = new Map(
 	[210 + 17, "Leap Day; Honor Djehuty (Thoth) and Seshat this day."],
 	[210 + 18, "Sailing of Ra in Iunu (Heliopolis)"],
 	[210 + 20, "Last Quarter (Second Denit)"],
+	[210 + 21, "Decade 23"],
+	[210 + 25, "Feasts of Horus and Sobek"],
+	[210 + 27, "New Moon"],
+	[210 + 28, "Mesopotamian intercalary month of Addaru II"],
+	[210 + 31, "Decade 24"],
+
+	[241 + 1, "Feasts of Horus Son of Isis, Rennutet and Hathor"],
+	[241 + 2, "First Quarter (First Denit)"],
+	[241 + 8, "Robing of Anubis"],
+	[241 + 10, "Decade 25"],
+	[241 + 11, "Full Moon"],
+	[241 + 15, "Feast of Amun-Min"],
+	[241 + 16, "Easter"],
+	[241 + 17, " Last Quarter (Second Denit)"],
+	[241 + 20, "Decade 26"],
+	[241 + 22, "Feasts of Khonsu and Horus, Son of Isis"],
+	[241 + 25, "New Moon"],
+	[241 + 26, "Mesopotamian New Year's; Month of Nisanu, Spring Akitu Begins"],
+	[241 + 29, "Feast of Min, Rennutet and Khonsu"],
+	[241 + 30, "Decade 27"],
+
+	[271 + 1, "First Quarter (First Denit)"],
+	[271 + 6, "Feast of Hathor, Eye of Ra in Bubastis"],
+	[271 + 9, "Passover begins at sundown"],
+	[271 + 10, "Full Moon; Decade 28"],
+	[271 + 13, "Beautiful Feast of the Valley"],
+	[271 + 18, "Last Quarter (Second Denit)"],
+	[271 + 20, "Purification of Sakhmet in Esna; Decade 29"],
+	[271 + 24, "New Moon"],
+	[271 + 25, "Mesopotamian month of Ayaru begins"],
+	[271 + 27, "Revealing the Face in the House of Neith of Esna"],
+	[271 + 30, "First Quarter (First Denit);Decade 30"],
+
+	[301 + 5, "Appearance of Djehuty (Thoth); Feast of Tawret"],
+	[301 + 10, "Full Moon; Decade 31"],
+	[301 + 11, "Feast of the Beautiful Reunion"],
+	[301 + 17, "Last Quarter (Second Denit)"],
+	[301 + 18, "Appearance of Khnum; Eating Cucumbers for the Eye of Horus"],
+	[301 + 20, "Decade 32"],
+	[301 + 24, "New Moon"],
+	[301 + 25, "Feasts of Isis Luminous and Mut, Mistress of Isheru; Mesopotamian month of Simanu begins"],
+	[301 + 29, "First Quarter (First Denit)"],
+	[301 + 30, "Decade 33"],
+
+	[331 + 2, "Feast of Set"],
+	[331 + 9, "Full Moon; Feast for Hathor Who Visits Ra in Iunu (Heliopolis)"],
+	[331 + 10, "Decade 34"],
+	[331 + 16, "Last Quarter (Second Denit); Feast of the Temple Patrons"],
+	[331 + 20, "Decade 35"],
+	[331 + 22, "Independence Day (US)"],
+	[331 + 23, "New Moon; Feast of Anubis Upon His Mountain"],
+	[331 + 24, "Mesopotamian month of Tammuz begins"],
+	[331 + 29, "First Quarter (First Denit)"],
+	[331 + 30, "Decade 36; Feast of Iri Mosyt honoring Min and Sokar"],
+
+	[361 + 1, "Birthday of Osiris"],
+	[361 + 2, "Birthday of Horus"],
+	[361 + 3, "Birthday of Seth"],
+	[361 + 4, "Birthday of Isis"],
+	[361 + 5, "Birthday of Nephthys"],
 ]);
 
 const festivalMap = new Map(
@@ -2266,7 +2326,7 @@ for (let day of allDays)
 			day.parentElement.appendChild(leapDay);
 		}
 	}
-	
+
 	const currentDay = dayCounter; // this is important...
 	if(currentDay == today)
 	{
@@ -2287,7 +2347,7 @@ for (let day of allDays)
 	{
 		day.classList.add("selected-date");
 	}
-	
+
 	// work out sunrise and sopdet altitude at that time.
 	let startDate = new Date(wepRonpetDate);
 	startDate.setDate(startDate.getDate() + (dayCounter - 1));
