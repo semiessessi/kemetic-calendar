@@ -2671,7 +2671,7 @@ function clickDay(dayNumber)
 		const level = clamp(rawLevel, 0, 1);
 		const sopdetLevel = clamp(sopdetAltitude / (Math.PI * 0.5), 0, 1);
 		const moonLevel = clamp(moonAltitude / (Math.PI * 0.5), 0, 1);
-		const colorLevel = clamp(3 * rawLevel + 0.5, 0, 1);
+		const colorLevel = clamp(3 * rawLevel + 0.65, 0, 1);
 		// TODO: a better gradient, maybe some reds in it?
 		newHTML += Math.floor(100 * colorLevel) + ',';
 		newHTML += Math.floor(64 + 192 * colorLevel) + ')">';
