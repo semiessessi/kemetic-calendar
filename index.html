@@ -460,6 +460,8 @@ body
 	<label for="wep-ronpet">Wep Ronpet Date (Gregorian):</label>
 	<input type="date" id="wep-ronpet" name="wep-ronpet">
 	<button type="button" onclick='applyChanges();'>Change Date</button>
+	<br>
+	<input type="checkbox" id="use-classical" name="use-classical" onclick='applyChanges();'>Continue from historical calendar</input>
 	<hr>
 	<label for="month-names">Month Names:</label>
 	<select name="month-names" id="month-names" onchange="updateMonthStyle()">
@@ -1815,10 +1817,29 @@ if(urlParams.has('festivals'))
 	}
 }
 
+// classical wep ronpet date
+let classicalDate = false;
+if(urlParams.has('classical-date'))
+{
+	classicalDate = true;
+}
+
 // key date
 let todayDate = new Date();
 let wepRonpetDate = new Date();
-if(festivals == "kemetic-reform")
+if(classicalDate == true)
+{
+	// find the day number for today.
+	const startJD = gregorianToJulianDay(todayDate.getFullYear(), todayDate.getMonth() + 1, todayDate.getDate());
+	// this Julian day is Thoth 1 Cleopatra VII 1
+	const epochStartDay = 1702677.5;
+	const adjustment = Math.floor((startJD - epochStartDay) % 365);
+	wepRonpetDate.setDate(wepRonpetDate.getDate() - adjustment);
+	
+	// change interface
+	document.getElementById('use-classical').checked = "checked";
+}
+else if(festivals == "kemetic-reform")
 {
 	wepRonpetDate.setMonth(6);
 	wepRonpetDate.setDate(18);
@@ -1832,7 +1853,7 @@ if(wepRonpetDate > todayDate)
 {
 	wepRonpetDate.setFullYear(wepRonpetDate.getFullYear()-1);
 }
-if(urlParams.has('wep-ronpet'))
+if((classicalDate == false) && urlParams.has('wep-ronpet'))
 {
 	wepRonpetDate = new Date(urlParams.get('wep-ronpet'));
 }
@@ -1897,6 +1918,11 @@ document.getElementById('sopdet-visible-warning').style.display =
 // set the date in the picker
 let datePicker = document.getElementById('wep-ronpet');
 datePicker.value = wepRonpetDate.toISOString().substring(0, 10);
+
+if(classicalDate == true)
+{
+	datePicker.disabled = true;
+}
 
 let gregorianDate = new Date(wepRonpetDate);
 gregorianDate.setDate(gregorianDate.getDate() + (selectedDay - 1));
@@ -2477,6 +2503,9 @@ function geolocate()
 function applyChanges()
 {
 	let newLocation = window.location.pathname;
+	
+	// this case is a bit special
+	classicalDate = document.getElementById("use-classical").checked;
 
 	if(festivals == "kemetic-reform")
 	{
@@ -2522,6 +2551,11 @@ function applyChanges()
 	if(festivals != "ucl")
 	{
 		newLocation += "&festivals=" + festivals;
+	}
+	
+	if(classicalDate != false)
+	{
+		newLocation += "&classical-date";
 	}
 
 	window.location = newLocation.replace('&', '?');
