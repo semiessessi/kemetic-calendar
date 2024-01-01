@@ -464,11 +464,12 @@ body
 	<hr>
 	<input type="checkbox" id="use-classical" name="use-classical" onclick='applyChanges();'>Historical calendar (overrides Wep Ronpet date)</input>
 	<br>
-	<label for="king" hidden>King:</label>
-	<select name="king" id="king" onchange="updateKing()" hidden>
+	<label for="king">King:</label>
+	<select name="king" id="king" onchange="updateKing()">
 	</select>
-	<label for="regnal-year" hidden>Regnal year:</label>
-	<input value= "1" id="regnal-year" name="regnal-year" hidden>
+	<label for="regnal-year">Regnal year:</label>
+	<input value="1" id="regnal-year" name="regnal-year">
+	<button type="button" onclick='applyChanges();'>Change date</button>
 	<hr>
 	<label for="month-names">Month names:</label>
 	<select name="month-names" id="month-names" onchange="updateMonthStyle()">
@@ -1827,6 +1828,7 @@ if(urlParams.has('festivals'))
 // classical wep ronpet date
 let classicalDate = false;
 let king = "Cleopatra VII";
+let regnalYear = -1;
 if(urlParams.has('classical-date'))
 {
 	classicalDate = true;
@@ -1834,13 +1836,18 @@ if(urlParams.has('classical-date'))
 	{
 		king = urlParams.get('king');
 	}
+	
+	if(urlParams.has('regnal-year'))
+	{
+		regnalYear = urlParams.get('regnal-year')
+	}
 }
+
+document.getElementById("regnal-year").disabled = !classicalDate;
 
 // key date
 let todayDate = new Date();
 let wepRonpetDate = new Date();
-let king = 0;
-let kingName = "Cleopatra VII";
 // these are a number of whole years to subtract
 // after Augustus the calendar was reformed to the Alexandrian calendar
 // with the leap years according to the Julian scheme...
@@ -2085,22 +2092,51 @@ const kingEras = new Map(
 ]);
 
 let kingCombo = document.getElementById("king");
+if(classicalDate == false)
+{
+	kingCombo.disabled = true;
+}
+
 for(kingPair of kingEras)
 {
-	kingCombo.innerHTML += '<option value="' + kingPair[1] + '">' + kingPair[0] + '</option>'
+	if(kingPair[0] == king)
+	{
+		kingCombo.innerHTML += '<option value="' + kingPair[1]
+			+ '" selected=true>' + kingPair[0] + '</option>'
+	}
+	else
+	{
+		kingCombo.innerHTML += '<option value="' + kingPair[1]
+			+ '">' + kingPair[0] + '</option>'
+	}
 }
 
 // this Julian day is Thoth 1 Cleopatra VII 1
-const epochStartDay = 1702677.5;
+let epochStartDay = 1702677.5;
+let defaultYears = 1;
 if(classicalDate == true)
 {
 	// find the day number for today.
 	const startJD = gregorianToJulianDay(todayDate.getFullYear(), todayDate.getMonth() + 1, todayDate.getDate());
+	let years = Math.floor((startJD - epochStartDay) / 365);
+	if(king != "Cleopatra VII")
+	{
+		epochStartDay -= kingCombo.value * 365;
+		years = Math.floor((startJD - epochStartDay) / 365);
+	}
+	defaultYears = years + 1;
+	if(regnalYear <= 0)
+	{
+		regnalYear = defaultYears;
+	}
+	yearAdjustment = (defaultYears - regnalYear) * 365;
+
 	const adjustment = Math.floor((startJD - epochStartDay) % 365);
-	wepRonpetDate.setDate(wepRonpetDate.getDate() - adjustment);
-	
+	wepRonpetDate.setDate(wepRonpetDate.getDate() - adjustment - yearAdjustment);
+
 	// change interface
 	document.getElementById('use-classical').checked = "checked";
+	document.getElementById('regnal-year').value = regnalYear;
 }
 else if(festivals == "kemetic-reform")
 {
@@ -3089,6 +3125,8 @@ function updateFestivals()
 
 function updateKing()
 {
+	king = kingCombo.options[kingCombo.selectedIndex].text;
+	regnalYear = document.getElementById('regnal-year').value;
 	applyChanges();
 }
 
@@ -3144,18 +3182,34 @@ function applyChanges()
 	// this case is a bit special
 	classicalDate = document.getElementById("use-classical").checked;
 
-	if(festivals == "kemetic-reform")
+	if(classicalDate == false)
 	{
-		if(datePicker.value != '2023-07-18')
+		if(festivals == "kemetic-reform")
 		{
-			newLocation+= "&wep-ronpet=" + datePicker.value;
+			if(datePicker.value != '2023-07-18')
+			{
+				newLocation+= "&wep-ronpet=" + datePicker.value;
+			}
+		}
+		else
+		{
+			if(datePicker.value != '2022-08-07')
+			{
+				newLocation+= "&wep-ronpet=" + datePicker.value;
+			}
 		}
 	}
 	else
 	{
-		if(datePicker.value != '2022-08-07')
+		regnalYear = document.getElementById("regnal-year").value;
+		if(king != "Cleopatra VII")
 		{
-			newLocation+= "&wep-ronpet=" + datePicker.value;
+			newLocation+= "&king=" + encodeURIComponent(king);
+		}
+
+		if(regnalYear != defaultYears)
+		{
+			newLocation += "&regnal-year=" + regnalYear;
 		}
 	}
 
@@ -3248,8 +3302,14 @@ function clickDay(dayNumber)
 		descriptionHTML = '<div class="sidebar-moon-phase-title">Full Moon</div>' + descriptionHTML;
 	}
 
+	let prettyGregorianYear = gregorianYear;
+	if(prettyGregorianYear <= 0)
+	{
+		prettyGregorianYear = (-prettyGregorianYear) + 1 + " BCE";
+	}
+
 	descriptionHTML += '<div class="sidebar-date-simple">'
-		+ gregorianDay + "/" + gregorianMonth + "/" + gregorianYear
+		+ gregorianDay + "/" + gregorianMonth + "/" + prettyGregorianYear
 		+ " / day " + dayNumber.toString()
 		+ " / JD " + gregorianToJulianDay(gregorianYear, gregorianMonth, gregorianDay) + "</div>";
 
