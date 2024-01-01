@@ -1826,9 +1826,14 @@ if(urlParams.has('festivals'))
 
 // classical wep ronpet date
 let classicalDate = false;
+let king = "Cleopatra VII";
 if(urlParams.has('classical-date'))
 {
 	classicalDate = true;
+	if(urlParams.has('king'))
+	{
+		king = urlParams.get('king');
+	}
 }
 
 // key date
@@ -2024,7 +2029,7 @@ const kingEras = new Map(
 	["Psamtik V", EgyptianEpochs.PsamtikV],
 	["Psamtik III", EgyptianEpochs.PsamtikIII],
 	["Ahmose II", EgyptianEpochs.AhmoseII],
-	["WahibreHaaibre", EgyptianEpochs.WahibreHaaibre],
+	["Wahibre Haaibre", EgyptianEpochs.WahibreHaaibre],
 	["Apries", EgyptianEpochs.Apries],
 	["Psamtik II", EgyptianEpochs.PsamtikII],
 	["Necho II", EgyptianEpochs.NechoII],
@@ -3079,6 +3084,11 @@ function updateFestivals()
 	{
 		monthStyle = 3;
 	}
+	applyChanges();
+}
+
+function updateKing()
+{
 	applyChanges();
 }
 
