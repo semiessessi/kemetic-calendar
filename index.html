@@ -1839,7 +1839,7 @@ if(urlParams.has('classical-date'))
 	
 	if(urlParams.has('regnal-year'))
 	{
-		regnalYear = urlParams.get('regnal-year')
+		regnalYear = parseInt(urlParams.get('regnal-year'));
 	}
 }
 
@@ -2148,10 +2148,11 @@ else
 	wepRonpetDate.setMonth(7);
 	wepRonpetDate.setDate(7);
 }
-if(wepRonpetDate > todayDate)
+if((classicalDate == false) && (wepRonpetDate > todayDate))
 {
 	wepRonpetDate.setFullYear(wepRonpetDate.getFullYear()-1);
 }
+
 if((classicalDate == false) && urlParams.has('wep-ronpet'))
 {
 	wepRonpetDate = new Date(urlParams.get('wep-ronpet'));
@@ -2160,7 +2161,7 @@ if((classicalDate == false) && urlParams.has('wep-ronpet'))
 let today = Math.floor((todayDate - wepRonpetDate) / 86400000) + 1;
 
 // selected day
-let selectedDay = (today >= 1) ? today : 1;
+let selectedDay = ((today <= 366) && (today >= 1)) ? today : 1;
 if(urlParams.has('selected-day'))
 {
 	selectedDay = parseInt(urlParams.get('selected-day'));
