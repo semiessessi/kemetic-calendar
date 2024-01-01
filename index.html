@@ -2228,6 +2228,18 @@ gregorianDate.setDate(gregorianDate.getDate() + (selectedDay - 1));
 let gregorianYear = gregorianDate.getFullYear();
 let gregorianMonth = gregorianDate.getMonth() + 1;
 let gregorianDay = gregorianDate.getDate();
+let dayOfTheWeek = gregorianDate.getDay();
+
+const weekdays =
+[
+	"Sunday",
+	"Monday",
+	"Tuesday",
+	"Wednesday",
+	"Thursday",
+	"Friday",
+	"Saturday"
+]
 
 const seasonMonths =
 [
@@ -3184,18 +3196,21 @@ function applyChanges()
 
 	if(classicalDate == false)
 	{
-		if(festivals == "kemetic-reform")
+		if(datePicker.value != '')
 		{
-			if(datePicker.value != '2023-07-18')
+			if(festivals == "kemetic-reform")
 			{
-				newLocation+= "&wep-ronpet=" + datePicker.value;
+				if(datePicker.value != '2023-07-18')
+				{
+					newLocation+= "&wep-ronpet=" + datePicker.value;
+				}
 			}
-		}
-		else
-		{
-			if(datePicker.value != '2022-08-07')
+			else
 			{
-				newLocation+= "&wep-ronpet=" + datePicker.value;
+				if(datePicker.value != '2022-08-07')
+				{
+					newLocation+= "&wep-ronpet=" + datePicker.value;
+				}
 			}
 		}
 	}
@@ -3307,11 +3322,11 @@ function clickDay(dayNumber)
 	{
 		prettyGregorianYear = (-prettyGregorianYear) + 1 + " BCE";
 	}
-
+	
 	descriptionHTML += '<div class="sidebar-date-simple">'
-		+ gregorianDay + "/" + gregorianMonth + "/" + prettyGregorianYear
-		+ " / day " + dayNumber.toString()
-		+ " / JD " + gregorianToJulianDay(gregorianYear, gregorianMonth, gregorianDay) + "</div>";
+		+ weekdays[dayOfTheWeek] + " " + gregorianDay + "/" + gregorianMonth + "/" + prettyGregorianYear
+		+ "<br>Day " + dayNumber.toString() + " of the year"
+		+ "<br>JD " + gregorianToJulianDay(gregorianYear, gregorianMonth, gregorianDay) + "</div>";
 
 	if(cairoCalendarLuck[selectedDay - 1] != "-")
 	{
