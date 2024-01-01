@@ -457,13 +457,20 @@ body
 <span class="title">Kemetic Festival Calendar</span>
 <hr>
 <div class="options">
-	<label for="wep-ronpet">Wep Ronpet Date (Gregorian):</label>
+	<label for="wep-ronpet">Wep Ronpet date (Gregorian):</label>
 	<input type="date" id="wep-ronpet" name="wep-ronpet">
-	<button type="button" onclick='applyChanges();'>Change Date</button>
+	<button type="button" onclick='applyChanges();'>Change date</button>
 	<br>
-	<input type="checkbox" id="use-classical" name="use-classical" onclick='applyChanges();'>Continue from historical calendar</input>
 	<hr>
-	<label for="month-names">Month Names:</label>
+	<input type="checkbox" id="use-classical" name="use-classical" onclick='applyChanges();'>Historical calendar (overrides Wep Ronpet date)</input>
+	<br>
+	<label for="king" hidden>King:</label>
+	<select name="king" id="king" onchange="updateKing()" hidden>
+	</select>
+	<label for="regnal-year" hidden>Regnal year:</label>
+	<input value= "1" id="regnal-year" name="regnal-year" hidden>
+	<hr>
+	<label for="month-names">Month names:</label>
 	<select name="month-names" id="month-names" onchange="updateMonthStyle()">
 		<option value="0">Middle Kingdom</option>
 		<option value="1">New Kingdom</option>
@@ -491,7 +498,7 @@ body
 	<label for="custom-longitude"Longitude:</label>
 	<input class="custom-longitude" name="custom-longitude" id="custom-longitude" type="text">
 	<button type="button" onclick='applyLocation();'>Apply</button>
-	<button type="button" onclick='geolocate();'>Use Current Location</button>
+	<button type="button" onclick='geolocate();'>Use current location</button>
 	<br>
 	<label for="timezone-choice">Timezone:</label>
 	<select class="timezone-choice" name="timezone-choice" id="timezone-choice" onchange="applyTimezoneSelection()">
@@ -1827,12 +1834,263 @@ if(urlParams.has('classical-date'))
 // key date
 let todayDate = new Date();
 let wepRonpetDate = new Date();
+let king = 0;
+let kingName = "Cleopatra VII";
+// these are a number of whole years to subtract
+// after Augustus the calendar was reformed to the Alexandrian calendar
+// with the leap years according to the Julian scheme...
+const EgyptianEpochs =
+{
+	// Ptolemaic Dynasty
+	CleopatraVIIPhilopator: 0,
+	PtolemyXIINeosDionysus: 29,
+	PtolemyIXSoter: 29 + 36,
+	PtolemyVIIIEuergetesII: 29 + 36 + 29,
+	PtolemyVIPhilometor: 29 + 36 + 29 + 35,
+	PtolemyVEpiphanes: 29 + 36 + 29 + 35 + 24,
+	PtolemyIVPhilopator: 29 + 36 + 29 + 35 + 24 + 17,
+	PtolemyIIIEuergetes: 29 + 36 + 29 + 35 + 24 + 17 + 25,
+	PtolemyIIPhiladelphus: 29 + 36 + 29 + 35 + 24 + 17 + 25 + 38,
+	PtolemyISoter: 29 + 36 + 29 + 35 + 24 + 17 + 25 + 38 + 20,
+
+	// Macedonians
+	AlexanderIV: 29 + 36 + 29 + 35 + 24 + 17 + 25 + 38 + 20 + 12,
+	PhilipIIIArridaeus: 29 + 36 + 29 + 35 + 24 + 17 + 25 + 38 + 20 + 12 + 7,
+	AlexanderTheGreat: 29 + 36 + 29 + 35 + 24 + 17 + 25 + 38 + 20 + 12 + 7 + 8, // = 280
+
+	// Persians
+	DariusIIICodomannus: 280 + 4,
+	ArtaxerxesIVArses: 280 + 4 + 2,
+	ArtaxerxesIIIOchus: 280 + 4 + 2 + 21,
+	ArtaxerxesIIMnemon: 280 + 4 + 2 + 21 + 46,
+	DariusIINothus: 280 + 4 + 2 + 21 + 46 + 19,
+	ArtaxerxesIMakrocheir: 280 + 4 + 2 + 21 + 46 + 19 + 41,
+	Xerxes: 280 + 4 + 2 + 21 + 46 + 19 + 41 + 21,
+	DariusTheGreat: 280 + 4 + 2 + 21 + 46 + 19 + 41 + 21 + 36,
+	CambysesII: 280 + 4 + 2 + 21 + 46 + 19 + 41 + 21 + 36 + 8,
+	CyrusTheGreat: 280 + 4 + 2 + 21 + 46 + 19 + 41 + 21 + 36 + 8 + 9, // = 487
+
+	// Babylonians
+	Nabonidus: 487 + 7,
+	Nerigilissar: 487 + 7 + 4,
+	AmelMarduk: 487 + 7 + 4 + 2,
+	NebuchadnezzarII: 487 + 7 + 4 + 2 + 43,
+	Nabopolassar: 487 + 7 + 4 + 2 + 43 + 21, // = 574
+
+	// Assyrians
+	Kandalanu: 574 + 22,
+	ShamashShumaUkin: 574 + 22 + 20,
+	AshurAhaIddina: 574 + 22 + 20 + 13,
+	SecondInterregnum: 574 + 22 + 20 + 13 + 8,
+	MushezibMarduk: 574 + 22 + 20 + 13 + 8 + 4,
+	NergalUshezib: 574 + 22 + 20 + 13 + 8 + 4 + 1,
+	AshurNadinShumi: 574 + 22 + 20 + 13 + 8 + 4 + 1 + 6,
+	BelIbni: 574 + 22 + 20 + 13 + 8 + 4 + 1 + 6 + 3,
+	FirstInterregnum: 574 + 22 + 20 + 13 + 8 + 4 + 1 + 6 + 3 + 2,
+	SharruUkin: 574 + 22 + 20 + 13 + 8 + 4 + 1 + 6 + 3 + 2 + 5,
+	MardukAplaIddin: 574 + 22 + 20 + 13 + 8 + 4 + 1 + 6 + 3 + 2 + 5 + 12,
+	Elulai: 574 + 22 + 20 + 13 + 8 + 4 + 1 + 6 + 3 + 2 + 5 + 12 + 5,
+	UkinZer: 574 + 22 + 20 + 13 + 8 + 4 + 1 + 6 + 3 + 2 + 5 + 12 + 5 + 5,
+	Pulu: 574 + 22 + 20 + 13 + 8 + 4 + 1 + 6 + 3 + 2 + 5 + 12 + 5 + 5,
+	Nadin: 574 + 22 + 20 + 13 + 8 + 4 + 1 + 6 + 3 + 2 + 5 + 12 + 5 + 5 + 2,
+	Nabonassar: 574 + 22 + 20 + 13 + 8 + 4 + 1 + 6 + 3 + 2 + 5 + 12 + 5 + 5 + 2 + 14,
+
+	// Late Period
+	// 30th Dynasty
+	// (based on syncornisms)
+	NectaneboII: 280 + 4 + 2 + 21 + 2, // = 309
+	Djedhor: 309 + 4, // why not 5???
+	Teos: 309 + 4, // why not 5???
+	NectaneboI: 309 + 4 + 17, // why not 19??? co-regency for two years.
+
+	// 29th Dynasty
+	NefaruudII: 330,
+	Hakor: 330 + 14,
+	Psammuthes: 330 + 14,
+	NefaruudI: 330 + 14 + 5,
+
+	// 28th Dynasty
+	Amyrtaeus: 349 + 7,
+	PsamtikV: 349 + 7, // = 356
+
+	// 26th Dynasty
+	PsamtikIII: 356 + 120,
+	AhmoseII: 356 + 120 + 44, // based on syncronisms
+	WahibreHaaibre: 356 + 120 + 44 + 19,
+	Apries: 356 + 120 + 44 + 19, // Manetho was right... it seems.
+	PsamtikII: 356 + 120 + 44 + 19 + 6,
+	NechoII: 356 + 120 + 44 + 19 + 6 + 15,
+	PsamtikI: 356 + 120 + 44 + 19 + 6 + 15 + 54, // Manetho was right... again
+
+	// 25th Dynasty
+	Tantamani: 614, // overlapped Psamtik I precisely it seems...
+	Taharqa: 614 + 26,
+	Shabaka: 614 + 15,
+	Shebiktu: 614 + 15 + 9,
+	Piye: 614 + 15 + 9 + 33,
+
+	// 24th Dynasty
+	Bakenranef: 669 + 6,
+	Tefnakht: 669 + 5 + 8, // = 682
+
+	// 23rd Dynasty
+	Ini: 682 + 5,
+	SheshonqVII: 682 + 5 + 18,
+	Rudamun: 682 + 5 + 18 + 4,
+	TakelotIII: 682 + 5 + 18 + 4 + 15,
+	OsorkonIII: 682 + 5 + 18 + 4 + 15 + 24,
+	SheshonqVI: 682 + 5 + 18 + 4 + 15 + 24 + 6,
+	PedubastIII: 682 + 5 + 18 + 4 + 15 + 24 + 6 + 25,
+	TakelotII: 682 + 5 + 18 + 4 + 15 + 24 + 6 + 25 + 11,
+	Harseisis: 682 + 5 + 18 + 4 + 15 + 24 + 6 + 25 + 11 + 40,
+
+	// 22nd Dynasty
+	OsorkonIV: 667 + 13,
+	ShoshenqV: 667 + 13 + 37,
+	Pami: 667 + 13 + 37 + 18,
+	ShoshenqIV: 667 + 13 + 37 + 31,
+	ShoshenqIII: 667 + 13 + 37 + 31 + 39,
+	OsorkonII: 667 + 13 + 37 + 31 + 39 + 35,
+	TakelotI: 667 + 13 + 37 + 31 + 39 + 35 + 13,
+	ShoshenqII: 667 + 13 + 37 + 31 + 39 + 35 + 13 + 2,
+	OsorkonI: 667 + 13 + 37 + 31 + 39 + 35 + 13 + 2 + 35,
+	ShoshenqI: 667 + 13 + 37 + 31 + 39 + 35 + 13 + 2 + 35 + 21,
+
+	// 21st Dynasty
+	PsusennesII: 893 + 23,
+	Siamun: 893 + 23 + 20,
+	OsorkonTheElder: 893 + 23 + 20 + 6,
+	// Amenemope?
+	PsusennesI: 893 + 23 + 20 + 6 + 55,
+	Amenemnisu: 893 + 23 + 20 + 6 + 55 + 4,
+	Smendes: 893 + 23 + 20 + 6 + 55 + 26, // 1023
+
+	// 20th Dynasty
+	RamessesXI: 1023 + 34,
+	RamessesX: 1023 + 34 + 4,
+	RamessesIX: 1023 + 34 + 4 + 18,
+	RamessesVIII: 1023 + 34 + 4 + 18 + 1,
+	RamessesVII: 1023 + 34 + 4 + 18 + 1 + 6,
+	//RamessesVI
+	RamessesV: 1023 + 34 + 4 + 18 + 1 + 6 + 13,
+	RamessesIV: 1023 + 34 + 4 + 18 + 1 + 6 + 13 + 6,
+	RamessesIII: 1023 + 34 + 4 + 18 + 1 + 6 + 13 + 6 + 31,
+	Setnakht: 1023 + 34 + 4 + 18 + 1 + 6 + 13 + 6 + 31 + 3,
+
+	// 19th Dynasty
+	Twosret: 1139 + 2,
+	Siptah: 1139 + 2 + 6,
+	SetiII: 1139 + 2 + 6 + 6,
+	Merneptah: 1139 + 2 + 6 + 6 + 10,
+	RamessesII: 1139 + 2 + 6 + 6 + 10 + 66,
+	SetiI: 1139 + 2 + 6 + 6 + 10 + 66 + 11, // 1290BC
+	RamessesI: 1139 + 2 + 6 + 6 + 10 + 66 + 11 + 2, // 1292BC
+};
+
+const kingEras = new Map(
+[
+	["Cleopatra VII", EgyptianEpochs.CleopatraVIIPhilopator],
+	["Ptolemy XII Neos Dionysus", EgyptianEpochs.PtolemyXIINeosDionysus],
+	["Ptolemy IX Soter", EgyptianEpochs.PtolemyIXSoter],
+	["Ptolemy VIII Euergetes II", EgyptianEpochs.PtolemyVIIIEuergetesII],
+	["Ptolemy VI Philometor", EgyptianEpochs.PtolemyVIPhilometor],
+	["Ptolemy V Epiphanes", EgyptianEpochs.PtolemyVEpiphanes],
+	["Ptolemy IV Philopator", EgyptianEpochs.PtolemyIVPhilopator],
+	["Ptolemy III Euergetes", EgyptianEpochs.PtolemyIIIEuergetes],
+	["Ptolemy II Philadelphus", EgyptianEpochs.PtolemyIIPhiladelphus],
+	["Ptolemy I Soter", EgyptianEpochs.PtolemyISoter],
+	["Alexander IV", EgyptianEpochs.AlexanderIV],
+	["Philip III Arridaeus", EgyptianEpochs.PhilipIIIArridaeus],
+	["Alexander the Great", EgyptianEpochs.AlexanderTheGreat],
+	["Darius III Codomannus", EgyptianEpochs.DariusIIICodomannus],
+	["Artaxerxes IV Arses", EgyptianEpochs.ArtaxerxesIVArses],
+	["Artaxerxes III Ochus", EgyptianEpochs.ArtaxerxesIIIOchus],
+	["Artaxerxes II Mnemon", EgyptianEpochs.ArtaxerxesIIMnemon],
+	["Darius II Nothus", EgyptianEpochs.DariusIINothus],
+	["Artaxerxes I Makrocheir", EgyptianEpochs.ArtaxerxesIMakrocheir],
+	["Xerxes", EgyptianEpochs.Xerxes],
+	["Darius the Great", EgyptianEpochs.DariusTheGreat],
+	["Cambyses II", EgyptianEpochs.CambysesII],
+	["Cyrus the Great", EgyptianEpochs.CyrusTheGreat],
+	["Nectanebo II", EgyptianEpochs.NectaneboII],
+	["Djedhor", EgyptianEpochs.Djedhor],
+	["Teos", EgyptianEpochs.Teos],
+	["Nectanebo I", EgyptianEpochs.NectaneboI],
+	["Nefaruud II", EgyptianEpochs.NefaruudII],
+	["Hakor", EgyptianEpochs.Hakor],
+	["Psammuthes", EgyptianEpochs.Psammuthes],
+	["Nefaruud I", EgyptianEpochs.NefaruudI],
+	["Amyrtaeus", EgyptianEpochs.Amyrtaeus],
+	["Psamtik V", EgyptianEpochs.PsamtikV],
+	["Psamtik III", EgyptianEpochs.PsamtikIII],
+	["Ahmose II", EgyptianEpochs.AhmoseII],
+	["WahibreHaaibre", EgyptianEpochs.WahibreHaaibre],
+	["Apries", EgyptianEpochs.Apries],
+	["Psamtik II", EgyptianEpochs.PsamtikII],
+	["Necho II", EgyptianEpochs.NechoII],
+	["Psamtik I", EgyptianEpochs.PsamtikI],
+	["Tantamani", EgyptianEpochs.Tantamani],
+	["Taharqa", EgyptianEpochs.Taharqa],
+	["Shabaka", EgyptianEpochs.Shabaka],
+	["Shebiktu", EgyptianEpochs.Shebiktu],
+	["Piye", EgyptianEpochs.Piye],
+	["Bakenranef", EgyptianEpochs.Bakenranef],
+	["Tefnakht", EgyptianEpochs.Tefnakht],
+	["Ini", EgyptianEpochs.Ini],
+	["Sheshonq VII", EgyptianEpochs.SheshonqVII],
+	["Rudamun", EgyptianEpochs.Rudamun],
+	["Takelot III", EgyptianEpochs.TakelotIII],
+	["Osorkon III", EgyptianEpochs.OsorkonIII],
+	["Sheshonq VI", EgyptianEpochs.SheshonqVI],
+	["Pedubast III", EgyptianEpochs.PedubastIII],
+	["Takelot II", EgyptianEpochs.TakelotII],
+	["Harseisis", EgyptianEpochs.Harseisis],
+	["Osorkon IV", EgyptianEpochs.OsorkonIV],
+	["Shoshenq V", EgyptianEpochs.ShoshenqV],
+	["Pami", EgyptianEpochs.Pami],
+	["Shoshenq IV", EgyptianEpochs.ShoshenqIV],
+	["Shoshenq III", EgyptianEpochs.ShoshenqIII],
+	["Osorkon II", EgyptianEpochs.OsorkonII],
+	["Takelot I", EgyptianEpochs.TakelotI],
+	["Shoshenq II", EgyptianEpochs.ShoshenqII],
+	["Osorkon I", EgyptianEpochs.OsorkonI],
+	["Shoshenq I", EgyptianEpochs.ShoshenqI],
+	["Psusennes II", EgyptianEpochs.PsusennesII],
+	["Siamun", EgyptianEpochs.Siamun],
+	["Osorkon the Elder", EgyptianEpochs.OsorkonTheElder],
+	["Psusennes I", EgyptianEpochs.PsusennesI],
+	["Amenemnisu", EgyptianEpochs.Amenemnisu],
+	["Smendes", EgyptianEpochs.Smendes],
+	["Ramesses XI", EgyptianEpochs.RamessesXI],
+	["Ramesses X", EgyptianEpochs.RamessesX],
+	["Ramesses IX", EgyptianEpochs.RamessesIX],
+	["Ramesses VIII", EgyptianEpochs.RamessesVIII],
+	["Ramesses VII", EgyptianEpochs.RamessesVII],
+	["Ramesses V", EgyptianEpochs.RamessesV],
+	["Ramesses IV", EgyptianEpochs.RamessesIV],
+	["Ramesses III", EgyptianEpochs.RamessesIII],
+	["Setnakht", EgyptianEpochs.Setnakht],
+	["Twosret", EgyptianEpochs.Twosret],
+	["Siptah", EgyptianEpochs.Siptah],
+	["Seti II", EgyptianEpochs.SetiII],
+	["Merneptah", EgyptianEpochs.Merneptah],
+	["Ramesses II", EgyptianEpochs.RamessesII],
+	["Seti I", EgyptianEpochs.SetiI],
+	["Ramesses I", EgyptianEpochs.RamessesI],
+]);
+
+let kingCombo = document.getElementById("king");
+for(kingPair of kingEras)
+{
+	kingCombo.innerHTML += '<option value="' + kingPair[1] + '">' + kingPair[0] + '</option>'
+}
+
+// this Julian day is Thoth 1 Cleopatra VII 1
+const epochStartDay = 1702677.5;
 if(classicalDate == true)
 {
 	// find the day number for today.
 	const startJD = gregorianToJulianDay(todayDate.getFullYear(), todayDate.getMonth() + 1, todayDate.getDate());
-	// this Julian day is Thoth 1 Cleopatra VII 1
-	const epochStartDay = 1702677.5;
 	const adjustment = Math.floor((startJD - epochStartDay) % 365);
 	wepRonpetDate.setDate(wepRonpetDate.getDate() - adjustment);
 	
