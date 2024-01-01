@@ -3116,6 +3116,8 @@ for (let day of allDays)
 let sopdetDayNumber = (secondDayUp < 0) ? firstDayUp : secondDayUp;
 if(sopdetRisingDay != null)
 {
+	sopdetRisingDay.classList.remove("end-of-decan");
+	sopdetRisingDay.classList.remove("festival-date");
 	sopdetRisingDay.classList.add("sopdet-heliacal-rising-day");
 }
 
@@ -3331,7 +3333,7 @@ function clickDay(dayNumber)
 
 	if(cairoCalendarLuck[selectedDay - 1] != "-")
 	{
-		descriptionHTML += '<div class="sidebar-moon-phase-title">' + cairoCalendarLuck[selectedDay - 1] + '</div>';
+		descriptionHTML += '<div class="sidebar-moon-phase-title" hidden>' + cairoCalendarLuck[selectedDay - 1] + '</div>';
 	}
 
 	descriptionHTML += '<hr>';
