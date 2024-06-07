@@ -504,6 +504,17 @@ body
 	<label for="timezone-choice">Timezone:</label>
 	<select class="timezone-choice" name="timezone-choice" id="timezone-choice" onchange="applyTimezoneSelection()">
 	</select>
+	<label for="arcus-visionis-value">Arcus visionis for Sopdet:</label>
+	<input class="arcus-visionis-value" name="arcus-visionis-value" id="arcus-visionis-value" type="text" onchange="applyArcusVisionisValue()">
+	<label for="arcus-visionis-choice">preset:</label>
+	<select class="arcus-visionis-choice" name="arcus-visionis-choice" id="arcus-visionis-choice" onchange="applyArcusVisionisPreset()">
+		<option value="0">Custom</option>
+		<option value="1">Ptolemy (Alexandria)</option>
+		<option value="2">Heliopolis/Memphis approximation</option>
+		<option value="3">Thebes approximation</option>
+		<option value="4">Northern Latitudes</option>
+	</select>
+	</select>
 	<div class="sopdet-visible-warning" id="sopdet-visible-warning">
 	WARNING: Sopdet never rises at this latitude!
 	</div>
@@ -974,6 +985,56 @@ function calculateAltitudeAzimuth(
 	return [ altitude, azimuth ];
 }
 
+// atmospheric refraction based on values from
+// https://secwww.jhuapl.edu/techdigest/Content/techdigest/pdf/V17-N03/17-03-Thomas.pdf
+function atmosphericAdjustment(altitudeAzimuth)
+{
+	//return altitudeAzimuth;
+	
+	const lookup =
+	[
+		[0, 34.5],
+		[0.25, 31.4],
+		[0.5, 28.7],
+		[0.75, 26.4],
+		[1, 24.3],
+		[1.25, 22.5],
+		[1.5, 20.9],
+		[1.75, 19.5],
+		[2, 18.3],
+		[3, 14.4],
+		[4.5, 10.7],
+		[10, 5.3],
+		[20, 2.6],
+		[60, 0.6],
+		[90, 0]
+	];
+	
+	let last = [0, 34.5];
+	for(const pair of lookup)
+	{
+		if(radiansToDegrees(altitudeAzimuth[0]) < pair[0])
+		{
+			if(last[0] == pair[0])
+			{
+				// nothing to interpolate
+				return [altitudeAzimuth[0] + degreesToRadians(lookup[0][1]/60), altitudeAzimuth[1]];
+			}
+			
+			let range = pair[0] - last[0];
+			let scaledValue = altitudeAzimuth[0] - last[0];
+			let interpolationAmount = scaledValue / range;
+			let distortion = last[1] + (pair[1] - last[1]) * interpolationAmount;
+			return [altitudeAzimuth[0] + degreesToRadians(distortion/60), altitudeAzimuth[1]];
+		}
+		
+		last = pair;
+	}
+	
+	// just return it, should never happen tho
+	return altitudeAzimuth;
+}
+
 // calculate sopdet location for a given time and place
 function evaluateSopdetLocalPosition(julianDay, latitude, longitude)
 {
@@ -1047,12 +1108,13 @@ function calculateSunRaDec(julianDay)
 function evaluateSunCoordinates(julianDay, latitude, longitude)
 {
 	const sunRADec = calculateSunRaDec(julianDay);
-	return calculateAltitudeAzimuth(
-		julianDay,
-		radiansToDegrees(sunRADec[0]),
-		radiansToDegrees(sunRADec[1]),
-		latitude,
-		longitude);
+	return atmosphericAdjustment(
+		calculateAltitudeAzimuth(
+			julianDay,
+			radiansToDegrees(sunRADec[0]),
+			radiansToDegrees(sunRADec[1]),
+			latitude,
+			longitude));
 }
 
 function calculateMoonRADec(julianDay)
@@ -1260,16 +1322,16 @@ function evaluateMoonCoordinates(julianDay, latitude, longitude)
 {
 	// note i don't think this is in j2000 (!)
 	const sunRADec = calculateMoonRADec(julianDay);
-	return calculateAltitudeAzimuth(
-		julianDay,
-		radiansToDegrees(sunRADec[0]),
-		radiansToDegrees(sunRADec[1]),
-		latitude,
-		longitude);
+	return atmosphericAdjustment(
+		calculateAltitudeAzimuth(
+			julianDay,
+			radiansToDegrees(sunRADec[0]),
+			radiansToDegrees(sunRADec[1]),
+			latitude,
+			longitude));
 }
 
 const sopdetMaxVisibleLatitude = 90 + Dec(-16, 42, 58.0171);
-const arcusVisionisSopdet = degreesToRadians(10);
 
 // these have timezones tacked on.
 const locations =
@@ -1312,9 +1374,9 @@ const timezones =
 ];
 
 // approximate apparent angular radius and atmospheric distortion (from wikipedia).
-const sunRiseAngle = degreesToRadians(-0.83);
+const sunRiseAngle = degreesToRadians(-18/60);
 
-function calculateNextSunrise(julianDay, latitude, longitude)
+function calculateNextSunrise(julianDay, latitude, longitude, angle)
 {
 	// try to find a point where the sun is below the horizon to start...
 	// work out its position at each hour for the next 24 hours to start.
@@ -1330,7 +1392,7 @@ function calculateNextSunrise(julianDay, latitude, longitude)
 	{
 		hoursSunAltAz[i] = evaluateSunCoordinates(
 			julianDay + i*timeStep, latitude, longitude);
-		if((riseHour < 0) && (hoursSunAltAz[i][0] > sunRiseAngle) && (lastSunAlt < sunRiseAngle))
+		if((riseHour < 0) && (hoursSunAltAz[i][0] > angle) && (lastSunAlt < angle))
 		{
 			riseHour = i;
 			break;
@@ -1350,7 +1412,7 @@ function calculateNextSunrise(julianDay, latitude, longitude)
 		let newValue = (lower + upper) / 2.0;
 		let newCoords = evaluateSunCoordinates(
 			julianDay + newValue * timeStep, latitude, longitude);
-		if(newCoords[0] < sunRiseAngle)
+		if(newCoords[0] < angle)
 		{
 			lower = newValue;
 			lowerCoords = newCoords;
@@ -1366,7 +1428,7 @@ function calculateNextSunrise(julianDay, latitude, longitude)
 	return (lower + upper) / 2.0;
 }
 
-function calculateNextSunset(julianDay, latitude, longitude)
+function calculateNextSunset(julianDay, latitude, longitude, angle)
 {
 	// try to find a point where the sun is below the horizon to start...
 	// work out its position at each hour for the next 24 hours to start.
@@ -1382,7 +1444,7 @@ function calculateNextSunset(julianDay, latitude, longitude)
 	{
 		hoursSunAltAz[i] = evaluateSunCoordinates(
 			julianDay + i*timeStep, latitude, longitude);
-		if((riseHour < 0) && (hoursSunAltAz[i][0] < sunRiseAngle) && (lastSunAlt > sunRiseAngle))
+		if((riseHour < 0) && (hoursSunAltAz[i][0] < angle) && (lastSunAlt > angle))
 		{
 			riseHour = i;
 			break;
@@ -1402,7 +1464,7 @@ function calculateNextSunset(julianDay, latitude, longitude)
 		let newValue = (lower + upper) / 2.0;
 		let newCoords = evaluateSunCoordinates(
 			julianDay + newValue * timeStep, latitude, longitude);
-		if(newCoords[0] > sunRiseAngle)
+		if(newCoords[0] > angle)
 		{
 			lower = newValue;
 			lowerCoords = newCoords;
@@ -1844,6 +1906,32 @@ if(urlParams.has('classical-date'))
 }
 
 document.getElementById("regnal-year").disabled = !classicalDate;
+
+let arcusVisionisDegrees = 10;
+if(urlParams.has('arcus-visionis'))
+{
+	arcusVisionisDegrees = parseInt(urlParams.get('arcus-visionis'));
+}
+
+document.getElementById("arcus-visionis-value").value = arcusVisionisDegrees;
+
+document.getElementById("arcus-visionis-choice").value = 0;
+if(arcusVisionisDegrees == 12)
+{
+	document.getElementById("arcus-visionis-choice").value = 4;
+}
+else if(arcusVisionisDegrees == 10)
+{
+	document.getElementById("arcus-visionis-choice").value = 1;
+}
+else if(arcusVisionisDegrees == 9)
+{
+	document.getElementById("arcus-visionis-choice").value = 2;
+}
+else if(arcusVisionisDegrees == 8)
+{
+	document.getElementById("arcus-visionis-choice").value = 3;
+}
 
 // key date
 let todayDate = new Date();
@@ -3080,25 +3168,27 @@ for (let day of allDays)
 	}
 
 	// work out sunrise and sopdet altitude at that time.
+	const arcusVisionisSopdet = degreesToRadians(arcusVisionisDegrees);
+	const sopdetRiseAltitude = degreesToRadians(2.5); // TODO: choose this?
 	let startDate = new Date(wepRonpetDate);
 	startDate.setDate(startDate.getDate() + (dayCounter - 1));
 	const startJD = gregorianToJulianDay(startDate.getFullYear(), startDate.getMonth() + 1, startDate.getDate());
-	const sunriseTime = calculateNextSunrise(startJD, selectedLatitude, selectedLongitude);
+	const sunriseTime = calculateNextSunrise(startJD, selectedLatitude, selectedLongitude, -arcusVisionisSopdet + sopdetRiseAltitude);
 	const sopdetAltitude = evaluateSopdetLocalPosition(startJD + sunriseTime / 24, selectedLatitude, selectedLongitude)[0];
-	if((firstDayUp < 0) && (sopdetAltitude > arcusVisionisSopdet))
+	if((firstDayUp < 0) && (sopdetAltitude > sopdetRiseAltitude))
 	{
-		// ... its up. this might eb the rising, might not be.
+		// ... its up. this might be the rising, might not be.
 		firstDayUp = dayCounter;
 		sopdetRisingDay = day;
 	}
 
-	if((firstDayDown < 0) && (sopdetAltitude < arcusVisionisSopdet))
+	if((firstDayDown < 0) && (sopdetAltitude < sopdetRiseAltitude))
 	{
 		// ... its up
 		firstDayDown = dayCounter;
 	}
 
-	if((firstDayDown >= 0) && (secondDayUp < 0) && (sopdetAltitude > arcusVisionisSopdet))
+	if((firstDayDown >= 0) && (secondDayUp < 0) && (sopdetAltitude > sopdetRiseAltitude))
 	{
 		// ... its up
 		secondDayUp = dayCounter;
@@ -3190,6 +3280,34 @@ function geolocate()
 	}
 }
 
+function applyArcusVisionisPreset()
+{
+	let choice = document.getElementById("arcus-visionis-choice").value;
+	if(choice == 1)
+	{
+		document.getElementById("arcus-visionis-value").value = 10;
+	}
+	else if(choice == 2)
+	{
+		document.getElementById("arcus-visionis-value").value = 9;
+	}
+	else if(choice == 3)
+	{
+		document.getElementById("arcus-visionis-value").value = 8;
+	}
+	else if(choice == 4)
+	{
+		document.getElementById("arcus-visionis-value").value = 12;
+	}
+	applyArcusVisionisValue();
+}
+
+function applyArcusVisionisValue()
+{
+	arcusVisionisDegrees = parseInt(document.getElementById("arcus-visionis-value").value);
+	applyChanges();
+}
+
 function applyChanges()
 {
 	let newLocation = window.location.pathname;
@@ -3265,6 +3383,11 @@ function applyChanges()
 	if(classicalDate != false)
 	{
 		newLocation += "&classical-date";
+	}
+	
+	if(arcusVisionisDegrees != 10)
+	{
+		newLocation += "&arcus-visionis=" + arcusVisionisDegrees;
 	}
 
 	window.location = newLocation.replace('&', '?');
@@ -3381,7 +3504,7 @@ function clickDay(dayNumber)
 		const sunAltitude = evaluateSunCoordinates(jdt, selectedLatitude, selectedLongitude)[0];
 		const moonCoords = evaluateMoonCoordinates(jdt, selectedLatitude, selectedLongitude);
 		const moonAltitude = moonCoords[0];
-		const sopdetAltitude = evaluateSopdetLocalPosition(jdt, selectedLatitude, selectedLongitude)[0];
+		const sopdetAltitude = atmosphericAdjustment(evaluateSopdetLocalPosition(jdt, selectedLatitude, selectedLongitude))[0];
 
 		// add a suitable bar.
 		let newHTML = container.innerHTML;
@@ -3415,13 +3538,13 @@ function clickDay(dayNumber)
 		container.innerHTML = newHTML;
 	}
 
-	let decSunrise = calculateNextSunrise(startJD, selectedLatitude, selectedLongitude);
+	let decSunrise = calculateNextSunrise(startJD, selectedLatitude, selectedLongitude, sunRiseAngle);
 	decSunrise += selectedTimezone;
 	if(decSunrise < 0)
 	{
 		decSunrise += 24;
 	}
-	let decSunset = calculateNextSunset(startJD, selectedLatitude, selectedLongitude);
+	let decSunset = calculateNextSunset(startJD, selectedLatitude, selectedLongitude, sunRiseAngle);
 	decSunset += selectedTimezone;
 	if(decSunset < 0)
 	{
