@@ -3501,8 +3501,8 @@ function clickDay(dayNumber)
 		const jdt = startJD + timeOfDay;
 		timeOfDay += hourTime;
 
-		const sunAltitude = evaluateSunCoordinates(jdt, selectedLatitude, selectedLongitude)[0];
-		const moonCoords = evaluateMoonCoordinates(jdt, selectedLatitude, selectedLongitude);
+		const sunAltitude = atmosphericAdjustment(evaluateSunCoordinates(jdt, selectedLatitude, selectedLongitude))[0];
+		const moonCoords = atmosphericAdjustment(evaluateMoonCoordinates(jdt, selectedLatitude, selectedLongitude));
 		const moonAltitude = moonCoords[0];
 		const sopdetAltitude = atmosphericAdjustment(evaluateSopdetLocalPosition(jdt, selectedLatitude, selectedLongitude))[0];
 
