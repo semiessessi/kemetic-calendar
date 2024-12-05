@@ -2085,6 +2085,9 @@ const EgyptianEpochs =
 	RamessesII: 1139 + 2 + 6 + 6 + 10 + 66,
 	SetiI: 1139 + 2 + 6 + 6 + 10 + 66 + 11, // 1290BC
 	RamessesI: 1139 + 2 + 6 + 6 + 10 + 66 + 11 + 2, // 1292BC
+	
+	// 18th Dynasty
+	Horemheb: 1242 + 14, // 1306 (might be 15 years???)
 };
 
 const kingEras = new Map(
@@ -2177,6 +2180,8 @@ const kingEras = new Map(
 	["Ramesses II", EgyptianEpochs.RamessesII],
 	["Seti I", EgyptianEpochs.SetiI],
 	["Ramesses I", EgyptianEpochs.RamessesI],
+	["Horemheb (Low 90.4%)", EgyptianEpochs.Horemheb],
+	["Horemheb (High 8.6%)", EgyptianEpochs.Horemheb + 1],
 ]);
 
 let kingCombo = document.getElementById("king");
