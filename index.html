@@ -3563,11 +3563,19 @@ function clickDay(dayNumber)
 	{
 		decSunrise += 24;
 	}
+	if(decSunrise >= 24)
+	{
+		decSunrise -= 24;
+	}
 	let decSunset = calculateNextSunset(startJD, selectedLatitude, selectedLongitude, sunRiseAngle);
 	decSunset += selectedTimezone;
 	if(decSunset < 0)
 	{
 		decSunset += 24;
+	}
+	if(decSunset >= 24)
+	{
+		decSunset -= 24;
 	}
 	const sunriseHTML = '<div class="sunrise">Estimated sunrise time:'
 		+ Math.floor(decSunrise) + "h "
